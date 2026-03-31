@@ -160,12 +160,15 @@ const Komentar = () => {
     const [error, setError] = useState('');
     const [replyingTo, setReplyingTo] = useState(null);
 
-    useEffect(() => {
-        AOS.init({
-            once: false,
-            duration: 1000,
-        });
-    }, []);
+    const handleLogoClick = () => {
+        const password = prompt("Enter Creator Access Code:");
+        if (password === 'doni123') {
+            setIsCreatorMode(true);
+            alert("Creator Mode Active!");
+        } else {
+            alert("Unauthorized!");
+        }
+    };
 
     const fetchComments = async () => {
         try {
@@ -193,6 +196,7 @@ const Komentar = () => {
     };
 
     useEffect(() => {
+        AOS.init({ once: false, duration: 1000 });
         fetchComments();
 
         const subscription = supabase
@@ -206,28 +210,6 @@ const Komentar = () => {
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
-
-    const uploadImage = useCallback(async (imageFile) => {
-        if (!imageFile) return null;
-
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `profile-images/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-            .from('profile-images')
-            .upload(filePath, imageFile);
-
-        if (uploadError) {
-            throw uploadError;
-        }
-
-        const { data } = supabase.storage
-            .from('profile-images')
-            .getPublicUrl(filePath);
-
-        return data.publicUrl;
     }, []);
 
     const handleCommentSubmit = useCallback(async ({ newComment, userName, parentId = null }) => {
@@ -271,24 +253,26 @@ const Komentar = () => {
         if (diffDays < 7) return `${diffDays}d ago`;
 
         return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
+            year: 'numeric', month: 'short', day: 'numeric'
         }).format(date);
     }, []);
 
-    // Calculate total comments (pinned + regular)
     const totalComments = comments.length + (pinnedComment ? 1 : 0);
 
     return (
         <div className="w-full bg-gradient-to-b from-white/10 to-white/5 rounded-2xl  backdrop-blur-xl shadow-xl" data-aos="fade-up" data-aos-duration="1000">
             <div className="p-6 border-b border-white/10" data-aos="fade-down" data-aos-duration="800">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-indigo-500/20">
+                    <div
+                        className="p-2 rounded-xl bg-indigo-500/20 cursor-pointer hover:bg-indigo-500/30 transition-colors"
+                        onClick={handleLogoClick}
+                        title="Creator Login"
+                    >
                         <MessageCircle className="w-6 h-6 text-indigo-400" />
                     </div>
                     <h3 className="text-xl font-semibold text-white">
                         Comments <span className="text-indigo-400">({totalComments})</span>
+                        {isCreatorMode && <span className="ml-2 text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold animate-pulse">Creator Mode</span>}
                     </h3>
                 </div>
             </div>
@@ -304,7 +288,7 @@ const Komentar = () => {
                     <CommentForm onSubmit={handleCommentSubmit} isSubmitting={isSubmitting} error={error} />
                 </div>
 
-                <div className="space-y-4 pt-1 pr-1" data-aos="fade-up" data-aos-delay="200">
+                <div className="space-y-4 pt-1 pr-1 overflow-y-auto max-h-[500px] custom-scrollbar" data-aos="fade-up" data-aos-delay="200">
                     {pinnedComment && (
                         <div data-aos="fade-down" data-aos-duration="800">
                             <Comment
@@ -312,7 +296,7 @@ const Komentar = () => {
                                 formatDate={formatDate}
                                 index={0}
                                 isPinned={true}
-                                onReply={(c) => setReplyingTo(c)}
+                                onReply={isCreatorMode ? (c) => setReplyingTo(c) : null}
                             />
                             {replyingTo?.id === pinnedComment.id && (
                                 <div className="mt-4 ml-8 sm:ml-12 bg-white/5 p-4 rounded-2xl border border-white/10">
@@ -348,7 +332,7 @@ const Komentar = () => {
                                     comment={comment}
                                     formatDate={formatDate}
                                     index={index + (pinnedComment ? 1 : 0)}
-                                    onReply={(c) => setReplyingTo(c)}
+                                    onReply={isCreatorMode ? (c) => setReplyingTo(c) : null}
                                 />
                                 {replyingTo?.id === comment.id && (
                                     <div className="ml-8 sm:ml-12 bg-white/5 p-4 rounded-2xl border border-white/10">
