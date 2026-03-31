@@ -69,10 +69,14 @@ const Comment = memo(({ comment, formatDate, index, isPinned = false, onReply, i
     </div>
 ));
 
-const CommentForm = memo(({ onSubmit, isSubmitting, error, placeholder = "Write your message here...", buttonText = "Post Comment", onCancel }) => {
+const CommentForm = memo(({ onSubmit, isSubmitting, error, placeholder = "Write your message here...", buttonText = "Post Comment", onCancel, showNameInput = true, initialName = "" }) => {
     const [newComment, setNewComment] = useState('');
-    const [userName, setUserName] = useState('');
+    const [userName, setUserName] = useState(initialName);
     const textareaRef = useRef(null);
+
+    useEffect(() => {
+        if (initialName) setUserName(initialName);
+    }, [initialName]);
 
     const handleTextareaChange = useCallback((e) => {
         setNewComment(e.target.value);
@@ -88,25 +92,27 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error, placeholder = "Write 
 
         onSubmit({ newComment, userName });
         setNewComment('');
-        setUserName('');
+        if (showNameInput) setUserName('');
         if (textareaRef.current) textareaRef.current.style.height = 'auto';
-    }, [newComment, userName, onSubmit]);
+    }, [newComment, userName, onSubmit, showNameInput]);
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <input
-                        type="text"
-                        value={userName}
-                        onChange={(e) => setUserName(e.target.value)}
-                        maxLength={15}
-                        placeholder="Your Name"
-                        className="w-full p-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium"
-                        required
-                    />
+            {showNameInput && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <input
+                            type="text"
+                            value={userName}
+                            onChange={(e) => setUserName(e.target.value)}
+                            maxLength={15}
+                            placeholder="Your Name"
+                            className="w-full p-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium"
+                            required
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="space-y-2">
                 <textarea
@@ -307,6 +313,8 @@ const Komentar = () => {
                                         placeholder={`Reply to ${pinnedComment.user_name}...`}
                                         buttonText="Post Reply"
                                         onCancel={() => setReplyingTo(null)}
+                                        showNameInput={false}
+                                        initialName="Doni"
                                     />
                                 </div>
                             )}
@@ -343,6 +351,8 @@ const Komentar = () => {
                                             placeholder={`Reply to ${comment.user_name}...`}
                                             buttonText="Post Reply"
                                             onCancel={() => setReplyingTo(null)}
+                                            showNameInput={false}
+                                            initialName="Doni"
                                         />
                                     </div>
                                 )}
