@@ -41,8 +41,8 @@ const Comment = memo(({ comment, formatDate, index, isPinned = false, onReply, i
                             }`}>
                             {comment.user_name}
                         </h4>
-                        {isPinned && (
-                            <span className="px-2 py-0.5 text-xs bg-indigo-500/20 text-indigo-300 rounded-full">
+                        {(isPinned || comment.user_name === 'Doni') && (
+                            <span className="px-2 py-0.5 text-[10px] bg-indigo-500/20 text-indigo-300 rounded-full border border-indigo-500/30">
                                 Creator
                             </span>
                         )}
