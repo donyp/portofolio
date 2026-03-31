@@ -80,7 +80,7 @@ const PAUSE_DURATION = 2000;
 const WORDS = ["Brand Designer", "Visual Storyteller", "Content Creator"];
 const TECH_STACK = ["Branding", "Design", "Strategy", "Content"];
 const SOCIAL_LINKS = [
-  { icon: Linkedin, link: "https://www.linkedin.com/in/doni-sugiharto/" },
+  { icon: Linkedin, link: "https://www.linkedin.com/in/doni-sugiharto-601874294/" },
   { icon: Instagram, link: "https://www.instagram.com/doniisgh/?hl=id" }
 ];
 
