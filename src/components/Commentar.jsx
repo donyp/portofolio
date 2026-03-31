@@ -157,6 +157,7 @@ const Komentar = () => {
     const [replies, setReplies] = useState({});
     const [pinnedComment, setPinnedComment] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCreatorMode, setIsCreatorMode] = useState(false);
     const [error, setError] = useState('');
     const [replyingTo, setReplyingTo] = useState(null);
 
