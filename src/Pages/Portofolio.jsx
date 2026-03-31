@@ -104,18 +104,18 @@ function a11yProps(index) {
 
 // techStacks tetap sama
 const techStacks = [
-  { icon: "html.svg", language: "HTML" },
-  { icon: "css.svg", language: "CSS" },
-  { icon: "javascript.svg", language: "JavaScript" },
-  { icon: "tailwind.svg", language: "Tailwind CSS" },
-  { icon: "reactjs.svg", language: "ReactJS" },
-  { icon: "vite.svg", language: "Vite" },
-  { icon: "nodejs.svg", language: "Node JS" },
-  { icon: "bootstrap.svg", language: "Bootstrap" },
-  { icon: "firebase.svg", language: "Firebase" },
-  { icon: "MUI.svg", language: "Material UI" },
-  { icon: "vercel.svg", language: "Vercel" },
-  { icon: "SweetAlert.svg", language: "SweetAlert2" },
+  { icon: "Photoshop.svg", language: "Photoshop" },
+  { icon: "Illustrator.svg", language: "Illustrator" },
+  { icon: "Lightroom.svg", language: "Lightroom" },
+  { icon: "Coreldraw.svg", language: "CorelDraw" },
+  { icon: "Canva.svg", language: "Canva" },
+  { icon: "Meta.svg", language: "Meta Ads" },
+  { icon: "Figma.svg", language: "Figma" },
+  { icon: "Sketchup.svg", language: "SketchUp" },
+  { icon: "AE.svg", language: "After Effect" },
+  { icon: "AM.svg", language: "Alight Motion" },
+  { icon: "Capcut.svg", language: "Capcut" },
+  { icon: "Photopea.svg", language: "Photopea" },
 ];
 
 export default function FullWidthTabs() {
@@ -209,8 +209,7 @@ export default function FullWidthTabs() {
           </span>
         </h2>
         <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base mt-2">
-          Explore my journey through projects, certifications, and technical expertise. 
-          Each section represents a milestone in my continuous learning path.
+          A curated collection of design work focused on building strong and consistent visual identities. From concept exploration to final execution, each project is designed to strengthen brand recognition and clarity.
         </p>
       </div>
 
@@ -295,7 +294,7 @@ export default function FullWidthTabs() {
             />
             <Tab
               icon={<Boxes className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Tech Stack"
+              label="Software Skill"
               {...a11yProps(2)}
             />
           </Tabs>
