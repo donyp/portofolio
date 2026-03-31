@@ -111,14 +111,14 @@ const ContactPage = () => {
     <div className="px-[5%] sm:px-[5%] lg:px-[10%] min-h-screen flex flex-col justify-center" id="Contact">
       <div className="container mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start justify-center">
-          {/* Social Links Section */}
-          <div className="w-full" data-aos="fade-right" data-aos-duration="1000">
-            <SocialLinks />
+          {/* Comments Section */}
+          <div className="w-full bg-white/5 backdrop-blur-xl rounded-2xl p-4 shadow-2xl" data-aos="fade-right" data-aos-duration="1000">
+            <Komentar />
           </div>
 
-          {/* Comments Section */}
-          <div className="w-full bg-white/5 backdrop-blur-xl rounded-2xl p-4 shadow-2xl" data-aos="fade-left" data-aos-duration="1000">
-            <Komentar />
+          {/* Social Links Section */}
+          <div className="w-full" data-aos="fade-left" data-aos-duration="1000">
+            <SocialLinks />
           </div>
         </div>
       </div>

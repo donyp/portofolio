@@ -21,7 +21,7 @@ const Header = memo(() => (
       data-aos-duration="800"
     >
       <Sparkles className="w-5 h-5 text-purple-400" />
-      Every visual, every post — built with purpose.
+      Turning ideas into impactful visual experiences.
       <Sparkles className="w-5 h-5 text-purple-400" />
     </p>
   </div>
@@ -198,7 +198,7 @@ const AboutPage = () => {
               data-aos-duration="1000"
             >
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366f1] to-[#a855f7]">
-                Halo, Saya
+                Get to Know
               </span>
               <span
                 className="block mt-2 text-gray-200"
@@ -214,7 +214,7 @@ const AboutPage = () => {
               data-aos="fade-right"
               data-aos-duration="1500"
             >
-              Menyebut diri nya sebagai seorang graphic designer sekaligus social media specialist, Saya percaya bahwa desain yang baik memiliki tujuan. Setiap visual yang saya buat selalu berangkat dari pemahaman konsep, identitas brand, dan kebutuhan audiens, sehingga tidak hanya terlihat bagus, tetapi juga fungsional dan relevan.
+              Dengan pengalaman di bidang graphic design dan social media, saya fokus menciptakan visual yang tidak hanya menarik secara estetika, tetapi juga mampu menyampaikan pesan brand dengan jelas. Setiap proyek yang saya kerjakan dimulai dari riset mendalam tentang audiens dan tujuan bisnis.
             </p>
 
             {/* Quote Section */}
@@ -235,7 +235,7 @@ const AboutPage = () => {
               </div>
 
               <blockquote className="text-gray-300 text-center lg:text-left italic font-medium text-sm relative z-10 pl-6">
-                "Designing visuals that speak quietly, and with intention."
+                "Good design is not just about aesthetics — it's about solving problems with creativity."
               </blockquote>
             </div>
 
