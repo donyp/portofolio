@@ -122,11 +122,11 @@ const WelcomeScreen = ({ onLoadingComplete }) => {
                       Hi, I'm Doni
                     </span>
                   </div>
-                  <div>
-                    <span data-aos="fade-up" data-aos-delay="800" className="inline-block px-2 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  <div className="flex justify-center gap-2 md:gap-3 pb-2">
+                    <span data-aos="fade-up" data-aos-delay="800" className="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent pb-2">
                       Let's Create
-                    </span>{' '}
-                    <span data-aos="fade-up" data-aos-delay="1000" className="inline-block px-2 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                    </span>
+                    <span data-aos="fade-up" data-aos-delay="1000" className="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent pb-2">
                       Together
                     </span>
                   </div>
