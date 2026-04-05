@@ -76,7 +76,7 @@ const Home = () => {
   const [isHovering, setIsHovering] = useState(false)
 
   const [profile, setProfile] = useState({
-    full_name: "Doni Sugiharto",
+    full_name: "Creative Portfolio",
     role: "Visual Storyteller",
     typing_words: "Brand Designer, Visual Storyteller, Content Creator",
     github_url: "",
@@ -180,7 +180,7 @@ const Home = () => {
               data-aos-delay="200">
               <div className="space-y-4 sm:space-y-6 flex flex-col items-center">
                 <StatusBadge />
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tighter" data-aos="fade-up" data-aos-delay="600">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tighter text-white" data-aos="fade-up" data-aos-delay="600">
                   {profile.full_name}
                 </h1>
 

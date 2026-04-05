@@ -14,13 +14,11 @@ import {
     Eye,
     Video,
     Star,
-    Heart,
-    Award,
-    Code2,
-    UserCircle,
-    Instagram,
-    Linkedin,
-    Github
+    Github,
+    Edit2,
+    Upload,
+    Globe,
+    TrendingUp
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -39,9 +37,12 @@ const Admin = () => {
         typing_words: "",
         linkedin_url: "",
         instagram_url: "",
-        github_url: ""
+        github_url: "",
+        meta_title: "",
+        meta_description: ""
     });
     const [isEditingBlog, setIsEditingBlog] = useState(false);
+    const [editingBlog, setEditingBlog] = useState(null);
     const [newBlog, setNewBlog] = useState({ title: "", content: "", image_url: "", category: "Tech" });
     const [isEditingProject, setIsEditingProject] = useState(false);
     const [editingProject, setEditingProject] = useState(null);
@@ -122,16 +123,43 @@ const Admin = () => {
         setLoading(false);
     };
 
+    const handleFileUpload = async (file, bucket = "portfolio") => {
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+            const filePath = `uploads/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from(bucket)
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from(bucket)
+                .getPublicUrl(filePath);
+
+            return publicUrl;
+        } catch (error) {
+            Swal.fire("Upload Error", error.message, "error");
+            return null;
+        }
+    };
+
     const handleCreateBlog = async () => {
         if (!newBlog.title || !newBlog.content) return;
         setLoading(true);
-        const { error } = await supabase.from("blogs").insert([newBlog]);
+        const { error } = editingBlog
+            ? await supabase.from("blogs").update(newBlog).eq("id", editingBlog.id)
+            : await supabase.from("blogs").insert([newBlog]);
+
         if (error) {
             Swal.fire("Error", error.message, "error");
         } else {
-            Swal.fire("Success", "Blog post created!", "success");
+            Swal.fire("Success", editingBlog ? "Blog updated!" : "Blog post created!", "success");
             setNewBlog({ title: "", content: "", image_url: "", category: "Tech" });
             setIsEditingBlog(false);
+            setEditingBlog(null);
             fetchData();
         }
         setLoading(false);
@@ -160,13 +188,17 @@ const Admin = () => {
     const handleCreateProject = async () => {
         if (!newProject.Title || !newProject.Img) return;
         setLoading(true);
-        const { error } = await supabase.from("projects").insert([newProject]);
+        const { error } = editingProject
+            ? await supabase.from("projects").update(newProject).eq("id", editingProject.id)
+            : await supabase.from("projects").insert([newProject]);
+
         if (error) {
             Swal.fire("Error", error.message, "error");
         } else {
-            Swal.fire("Success", "Project created!", "success");
+            Swal.fire("Success", editingProject ? "Project updated!" : "Project created!", "success");
             setNewProject({ Title: "", Description: "", Link: "", Img: "", category: "Design", video_url: "", lottie_url: "" });
             setIsEditingProject(false);
+            setEditingProject(null);
             fetchData();
         }
         setLoading(false);
@@ -232,6 +264,17 @@ const Admin = () => {
         const { error } = await supabase.from("projects").update({ video_url, lottie_url }).eq("id", id);
         if (error) Swal.fire("Error", error.message, "error");
         else Swal.fire("Updated", "Project media updated!", "success");
+    };
+
+    const handleUpdateSEO = async () => {
+        setLoading(true);
+        const { error } = await supabase.from("site_settings").update({
+            meta_title: siteSettings.meta_title,
+            meta_description: siteSettings.meta_description
+        }).eq("id", siteSettings.id);
+        if (error) Swal.fire("Error", error.message, "error");
+        else Swal.fire("Success", "SEO settings updated!", "success");
+        setLoading(false);
     };
 
     const formatNumber = (num) => {
@@ -333,7 +376,11 @@ const Admin = () => {
                         <div className="flex items-center justify-between">
                             <h2 className="text-2xl font-bold">Manage Blogs</h2>
                             <button
-                                onClick={() => setIsEditingBlog(true)}
+                                onClick={() => {
+                                    setEditingBlog(null);
+                                    setNewBlog({ title: "", content: "", image_url: "", category: "Tech" });
+                                    setIsEditingBlog(true);
+                                }}
                                 className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-xl transition-all"
                             >
                                 <Plus className="w-4 h-4" /> New Post
@@ -356,12 +403,33 @@ const Admin = () => {
                                         onChange={e => setNewBlog({ ...newBlog, category: e.target.value })}
                                     />
                                 </div>
-                                <input
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-indigo-500"
-                                    placeholder="Thumbnail URL"
-                                    value={newBlog.image_url}
-                                    onChange={e => setNewBlog({ ...newBlog, image_url: e.target.value })}
-                                />
+                                <div className="space-y-4">
+                                    <label className="text-sm text-gray-400">Thumbnail Image</label>
+                                    <div className="flex gap-4">
+                                        <input
+                                            className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-indigo-500"
+                                            placeholder="Thumbnail URL"
+                                            value={newBlog.image_url}
+                                            onChange={e => setNewBlog({ ...newBlog, image_url: e.target.value })}
+                                        />
+                                        <label className="cursor-pointer bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-6 py-3 rounded-xl transition-all flex items-center gap-2">
+                                            <Upload className="w-5 h-5" />
+                                            <span>Upload</span>
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files[0];
+                                                    if (file) {
+                                                        const url = await handleFileUpload(file);
+                                                        if (url) setNewBlog({ ...newBlog, image_url: url });
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
                                 <textarea
                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3 h-40 focus:outline-none focus:border-indigo-500"
                                     placeholder="Content (Markdown/Text)"
@@ -369,8 +437,10 @@ const Admin = () => {
                                     onChange={e => setNewBlog({ ...newBlog, content: e.target.value })}
                                 />
                                 <div className="flex justify-end gap-3">
-                                    <button onClick={() => setIsEditingBlog(false)} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
-                                    <button onClick={handleCreateBlog} className="bg-indigo-500 px-6 py-2 rounded-xl font-bold">Create Post</button>
+                                    <button onClick={() => { setIsEditingBlog(false); setEditingBlog(null); }} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                                    <button onClick={handleCreateBlog} className="bg-indigo-500 px-6 py-2 rounded-xl font-bold">
+                                        {editingBlog ? "Update Post" : "Create Post"}
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -382,15 +452,36 @@ const Admin = () => {
                                         <img src={blog.image_url} alt="" className="w-12 h-12 rounded-lg object-cover bg-white/10" />
                                         <div>
                                             <h4 className="font-bold">{blog.title}</h4>
-                                            <span className="text-xs text-gray-500">{new Date(blog.created_at).toLocaleDateString()}</span>
+                                            <div className="flex items-center gap-3 mt-1">
+                                                <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                    <Eye className="w-3 h-3" /> {blog.views || 0}
+                                                </span>
+                                                <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                    <Heart className="w-3 h-3 text-pink-500/50" /> {blog.likes || 0}
+                                                </span>
+                                                <span className="text-xs text-gray-500 ml-2">{new Date(blog.created_at).toLocaleDateString()}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => handleDeleteBlog(blog.id)}
-                                        className="p-2 text-gray-500 hover:text-red-400 transition-colors"
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setEditingBlog(blog);
+                                                setNewBlog({ title: blog.title, content: blog.content, image_url: blog.image_url, category: blog.category });
+                                                setIsEditingBlog(true);
+                                                window.scrollTo(0, 0);
+                                            }}
+                                            className="p-2 text-gray-500 hover:text-indigo-400 transition-colors"
+                                        >
+                                            <Edit2 className="w-5 h-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteBlog(blog.id)}
+                                            className="p-2 text-gray-500 hover:text-red-400 transition-colors"
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -436,12 +527,31 @@ const Admin = () => {
                                     onChange={e => setNewProject({ ...newProject, Description: e.target.value })}
                                 />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <input
-                                        className="bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-indigo-500"
-                                        placeholder="Main Image URL"
-                                        value={newProject.Img}
-                                        onChange={e => setNewProject({ ...newProject, Img: e.target.value })}
-                                    />
+                                    <div className="space-y-4">
+                                        <div className="flex gap-2">
+                                            <input
+                                                className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-indigo-500"
+                                                placeholder="Main Image URL"
+                                                value={newProject.Img}
+                                                onChange={e => setNewProject({ ...newProject, Img: e.target.value })}
+                                            />
+                                            <label className="cursor-pointer bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-4 py-3 rounded-xl transition-all">
+                                                <Upload className="w-5 h-5" />
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            const url = await handleFileUpload(file);
+                                                            if (url) setNewProject({ ...newProject, Img: url });
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                        </div>
+                                    </div>
                                     <input
                                         className="bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-indigo-500"
                                         placeholder="Project Link (Optional)"
@@ -464,8 +574,10 @@ const Admin = () => {
                                     />
                                 </div>
                                 <div className="flex justify-end gap-3">
-                                    <button onClick={() => setIsEditingProject(false)} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
-                                    <button onClick={handleCreateProject} className="bg-indigo-500 px-6 py-2 rounded-xl font-bold">Save Project</button>
+                                    <button onClick={() => { setIsEditingProject(false); setEditingProject(null); }} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                                    <button onClick={handleCreateProject} className="bg-indigo-500 px-6 py-2 rounded-xl font-bold">
+                                        {editingProject ? "Update Project" : "Save Project"}
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -480,12 +592,33 @@ const Admin = () => {
                                             <span className="text-xs text-indigo-400">{project.category}</span>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => handleDeleteProject(project.id)}
-                                        className="p-2 text-gray-500 hover:text-red-400 transition-colors"
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setEditingProject(project);
+                                                setNewProject({
+                                                    Title: project.Title,
+                                                    Description: project.Description,
+                                                    Link: project.Link,
+                                                    Img: project.Img,
+                                                    category: project.category,
+                                                    video_url: project.video_url,
+                                                    lottie_url: project.lottie_url
+                                                });
+                                                setIsEditingProject(true);
+                                                window.scrollTo(0, 0);
+                                            }}
+                                            className="p-2 text-gray-500 hover:text-indigo-400 transition-colors"
+                                        >
+                                            <Edit2 className="w-5 h-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteProject(project.id)}
+                                            className="p-2 text-gray-500 hover:text-red-400 transition-colors"
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -643,6 +776,41 @@ const Admin = () => {
                                     className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 px-8 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-500/25"
                                 >
                                     <Save className="w-5 h-5" /> Save Changes
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* SEO Section */}
+                        <div className="bg-white/5 border border-white/10 p-8 rounded-3xl space-y-6">
+                            <h3 className="text-xl font-bold flex items-center gap-2">
+                                <Globe className="w-5 h-5 text-indigo-400" /> SEO Metadata
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm text-gray-400">Meta Title</label>
+                                    <input
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 focus:border-indigo-500 outline-none"
+                                        placeholder="Site Title (for Google)"
+                                        value={siteSettings.meta_title}
+                                        onChange={e => setSiteSettings({ ...siteSettings, meta_title: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm text-gray-400">Meta Description</label>
+                                    <textarea
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 h-24 focus:border-indigo-500 outline-none"
+                                        placeholder="Brief description of your site"
+                                        value={siteSettings.meta_description}
+                                        onChange={e => setSiteSettings({ ...siteSettings, meta_description: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={handleUpdateSEO}
+                                    className="flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-6 py-2 rounded-xl hover:bg-indigo-500 hover:text-white transition-all font-bold"
+                                >
+                                    <Save className="w-4 h-4" /> Save SEO
                                 </button>
                             </div>
                         </div>

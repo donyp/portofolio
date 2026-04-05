@@ -15,6 +15,8 @@ import Blog from "./Pages/Blog";
 import BlogDetail from "./Pages/BlogDetail";
 import LatestBlog from "./components/LatestBlog";
 import Admin from "./Pages/Admin";
+import { supabase } from "./supabase";
+import { useEffect } from "react";
 
 const LandingPage = ({ showWelcome, setShowWelcome }) => {
   return (
@@ -117,6 +119,29 @@ const BlogDetailLayout = () => (
 
 function App() {
   const [showWelcome, setShowWelcome] = useState(true);
+
+  useEffect(() => {
+    const fetchSEO = async () => {
+      try {
+        const { data } = await supabase.from("site_settings").select("meta_title, meta_description").single();
+        if (data) {
+          if (data.meta_title) document.title = data.meta_title;
+          if (data.meta_description) {
+            let metaDesc = document.querySelector('meta[name="description"]');
+            if (!metaDesc) {
+              metaDesc = document.createElement('meta');
+              metaDesc.name = "description";
+              document.head.appendChild(metaDesc);
+            }
+            metaDesc.content = data.meta_description;
+          }
+        }
+      } catch (err) {
+        console.error("SEO Fetch Error:", err);
+      }
+    };
+    fetchSEO();
+  }, []);
 
   return (
     <BrowserRouter>
