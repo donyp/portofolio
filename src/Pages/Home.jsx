@@ -19,25 +19,7 @@ const StatusBadge = memo(() => (
   </div>
 ));
 
-const MainTitle = memo(() => (
-  <div className="space-y-2" data-aos="fade-up" data-aos-delay="600">
-    <h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-6xl xl:text-7xl font-bold tracking-tight">
-      <span className="relative inline-block">
-        <span className="absolute -inset-2 bg-gradient-to-r from-[#6366f1] to-[#a855f7] blur-2xl opacity-20"></span>
-        <span className="relative bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent">
-          Doni Sugiharto
-        </span>
-      </span>
-      <br />
-      <span className="relative inline-block mt-2">
-        <span className="absolute -inset-2 bg-gradient-to-r from-[#6366f1] to-[#a855f7] blur-2xl opacity-20"></span>
-        <span className="relative bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent">
-          Creative Portfolio
-        </span>
-      </span>
-    </h1>
-  </div>
-));
+
 
 const TechStack = memo(({ tech }) => (
   <div className="px-4 py-2 hidden sm:block rounded-full bg-white/5 backdrop-blur-sm border border-white/10 text-sm text-gray-300 hover:bg-white/10 transition-colors">
@@ -48,7 +30,7 @@ const TechStack = memo(({ tech }) => (
 const CTAButton = memo(({ href, text, icon: Icon }) => (
   <a href={href}>
     <button className="group relative w-[160px]">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#4f52c9] to-[#8644c5] rounded-xl opacity-50 blur-md group-hover:opacity-90 transition-all duration-700"></div>
+      {/* Glow removed */}
       <div className="relative h-11 bg-[#030014] backdrop-blur-xl rounded-lg border border-white/10 leading-none overflow-hidden">
         <div className="absolute inset-0 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 bg-gradient-to-r from-[#4f52c9]/20 to-[#8644c5]/20"></div>
         <span className="absolute inset-0 flex items-center justify-center gap-2 text-sm group-hover:gap-3 transition-all duration-300">
@@ -65,7 +47,7 @@ const CTAButton = memo(({ href, text, icon: Icon }) => (
 const SocialLink = memo(({ icon: Icon, link }) => (
   <a href={link} target="_blank" rel="noopener noreferrer">
     <button className="group relative p-3">
-      <div className="absolute inset-0 bg-gradient-to-r from-[#6366f1] to-[#a855f7] rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
+      {/* Glow removed */}
       <div className="relative rounded-xl bg-black/50 backdrop-blur-xl p-2 flex items-center justify-center border border-white/10 group-hover:border-white/20 transition-all duration-300">
         <Icon className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
       </div>
@@ -80,8 +62,9 @@ const PAUSE_DURATION = 2000;
 const WORDS = ["Brand Designer", "Visual Storyteller", "Content Creator"];
 const TECH_STACK = ["Branding", "Design", "Strategy", "Content"];
 const SOCIAL_LINKS = [
-  { icon: Linkedin, link: "https://www.linkedin.com/in/doni-sugiharto-601874294/" },
-  { icon: Instagram, link: "https://www.instagram.com/doniisgh/?hl=id" }
+  { icon: Linkedin, key: "linkedin_url" },
+  { icon: Instagram, key: "instagram_url" },
+  { icon: Github, key: "github_url" }
 ];
 
 const Home = () => {
@@ -91,6 +74,18 @@ const Home = () => {
   const [charIndex, setCharIndex] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
+
+  const [profile, setProfile] = useState({
+    full_name: "Doni Sugiharto",
+    role: "Visual Storyteller",
+    typing_words: "Brand Designer, Visual Storyteller, Content Creator",
+    github_url: "",
+    linkedin_url: "",
+    instagram_url: ""
+  });
+  const [techStack, setTechStack] = useState([]);
+
+  const words = profile.typing_words.split(", ").map(w => w.trim());
 
   // Optimize AOS initialization
   useEffect(() => {
@@ -108,6 +103,19 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [settingsRes, techRes] = await Promise.all([
+          supabase.from("site_settings").select("*").single(),
+          supabase.from("tech_stacks").select("*").order("id", { ascending: true })
+        ]);
+        if (settingsRes.data) setProfile(settingsRes.data);
+        if (techRes.data) setTechStack(techRes.data);
+      } catch (err) {
+        console.error("Error fetching home data:", err);
+      }
+    };
+    fetchData();
     setIsLoaded(true);
     return () => setIsLoaded(false);
   }, []);
@@ -115,8 +123,8 @@ const Home = () => {
   // Optimize typing effect
   const handleTyping = useCallback(() => {
     if (isTyping) {
-      if (charIndex < WORDS[wordIndex].length) {
-        setText(prev => prev + WORDS[wordIndex][charIndex]);
+      if (charIndex < words[wordIndex].length) {
+        setText(prev => prev + words[wordIndex][charIndex]);
         setCharIndex(prev => prev + 1);
       } else {
         setTimeout(() => setIsTyping(false), PAUSE_DURATION);
@@ -126,11 +134,11 @@ const Home = () => {
         setText(prev => prev.slice(0, -1));
         setCharIndex(prev => prev - 1);
       } else {
-        setWordIndex(prev => (prev + 1) % WORDS.length);
+        setWordIndex(prev => (prev + 1) % words.length);
         setIsTyping(true);
       }
     }
-  }, [charIndex, isTyping, wordIndex]);
+  }, [charIndex, isTyping, wordIndex, words]);
 
   useEffect(() => {
     const timeout = setTimeout(
@@ -172,7 +180,9 @@ const Home = () => {
               data-aos-delay="200">
               <div className="space-y-4 sm:space-y-6 flex flex-col items-center">
                 <StatusBadge />
-                <MainTitle />
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tighter" data-aos="fade-up" data-aos-delay="600">
+                  {profile.full_name}
+                </h1>
 
                 {/* Typing Effect */}
                 <div className="h-8 flex items-center justify-center" data-aos="fade-up" data-aos-delay="800">
@@ -186,13 +196,15 @@ const Home = () => {
                 <p className="text-base md:text-lg text-gray-400 max-w-xl leading-relaxed font-light"
                   data-aos="fade-up"
                   data-aos-delay="1000">
-                  Crafting meaningful visuals and strategic content that help brands stand out, connect with their audience, and leave a lasting impression.
+                  {profile.role === "Visual Storyteller"
+                    ? "Crafting meaningful visuals and strategic content that help brands stand out, connect with their audience, and leave a lasting impression."
+                    : `Specializing in ${profile.role.toLowerCase()} and strategic branding to elevate your digital presence.`}
                 </p>
 
                 {/* Tech Stack */}
                 <div className="flex flex-wrap gap-3 justify-center" data-aos="fade-up" data-aos-delay="1200">
-                  {TECH_STACK.map((tech, index) => (
-                    <TechStack key={index} tech={tech} />
+                  {techStack.map((tech, index) => (
+                    <TechStack key={index} tech={tech.name} />
                   ))}
                 </div>
 
@@ -205,7 +217,7 @@ const Home = () => {
                 {/* Social Links */}
                 <div className="hidden sm:flex gap-4 justify-center pt-2" data-aos="fade-up" data-aos-delay="1600">
                   {SOCIAL_LINKS.map((social, index) => (
-                    <SocialLink key={index} {...social} />
+                    profile[social.key] ? <SocialLink key={index} icon={social.icon} link={profile[social.key]} /> : null
                   ))}
                 </div>
               </div>

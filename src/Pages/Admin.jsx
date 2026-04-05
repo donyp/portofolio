@@ -14,7 +14,13 @@ import {
     Eye,
     Video,
     Star,
-    Heart
+    Heart,
+    Award,
+    Code2,
+    UserCircle,
+    Instagram,
+    Linkedin,
+    Github
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -25,8 +31,21 @@ const Admin = () => {
     const [stats, setStats] = useState({ projects: 0, blogs: 0, likes: 0, views: 0 });
     const [blogs, setBlogs] = useState([]);
     const [projects, setProjects] = useState([]);
+    const [certificates, setCertificates] = useState([]);
+    const [techStacks, setTechStacks] = useState([]);
+    const [siteSettings, setSiteSettings] = useState({
+        full_name: "",
+        role: "",
+        typing_words: "",
+        linkedin_url: "",
+        instagram_url: "",
+        github_url: ""
+    });
     const [isEditingBlog, setIsEditingBlog] = useState(false);
     const [newBlog, setNewBlog] = useState({ title: "", content: "", image_url: "", category: "Tech" });
+    const [isEditingProject, setIsEditingProject] = useState(false);
+    const [editingProject, setEditingProject] = useState(null);
+    const [newProject, setNewProject] = useState({ Title: "", Description: "", Link: "", Img: "", category: "Design", video_url: "", lottie_url: "" });
 
     useEffect(() => {
         const checkAuth = () => {
@@ -76,9 +95,12 @@ const Admin = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [pRes, bRes] = await Promise.all([
+            const [pRes, bRes, cRes, tRes, sRes] = await Promise.all([
                 supabase.from("projects").select("*").order("id", { ascending: false }),
-                supabase.from("blogs").select("*").order("created_at", { ascending: false })
+                supabase.from("blogs").select("*").order("created_at", { ascending: false }),
+                supabase.from("certificates").select("*").order("id", { ascending: false }),
+                supabase.from("tech_stacks").select("*").order("id", { ascending: true }),
+                supabase.from("site_settings").select("*").single()
             ]);
 
             if (pRes.data) {
@@ -91,6 +113,9 @@ const Admin = () => {
                 setBlogs(bRes.data);
                 setStats(prev => ({ ...prev, blogs: bRes.data.length }));
             }
+            if (cRes.data) setCertificates(cRes.data);
+            if (tRes.data) setTechStacks(tRes.data);
+            if (sRes.data) setSiteSettings(sRes.data);
         } catch (err) {
             console.error(err);
         }
@@ -132,6 +157,77 @@ const Admin = () => {
         }
     };
 
+    const handleCreateProject = async () => {
+        if (!newProject.Title || !newProject.Img) return;
+        setLoading(true);
+        const { error } = await supabase.from("projects").insert([newProject]);
+        if (error) {
+            Swal.fire("Error", error.message, "error");
+        } else {
+            Swal.fire("Success", "Project created!", "success");
+            setNewProject({ Title: "", Description: "", Link: "", Img: "", category: "Design", video_url: "", lottie_url: "" });
+            setIsEditingProject(false);
+            fetchData();
+        }
+        setLoading(false);
+    };
+
+    const handleDeleteProject = async (id) => {
+        const result = await Swal.fire({
+            title: "Are you sure?",
+            text: "This project will be permanently deleted.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!",
+            background: "#030014",
+            color: "#ffffff"
+        });
+        if (result.isConfirmed) {
+            const { error } = await supabase.from("projects").delete().eq("id", id);
+            if (error) Swal.fire("Error", error.message, "error");
+            else fetchData();
+        }
+    };
+
+    const handleUpdateSiteSettings = async () => {
+        setLoading(true);
+        const { error } = await supabase.from("site_settings").update(siteSettings).eq("id", siteSettings.id);
+        if (error) {
+            Swal.fire("Error", error.message, "error");
+        } else {
+            Swal.fire("Success", "Site settings updated!", "success");
+            fetchData();
+        }
+        setLoading(false);
+    };
+
+    const handleCreateCertificate = async (Img) => {
+        if (!Img) return;
+        const { error } = await supabase.from("certificates").insert([{ Img }]);
+        if (error) Swal.fire("Error", error.message, "error");
+        else fetchData();
+    };
+
+    const handleDeleteCertificate = async (id) => {
+        const { error } = await supabase.from("certificates").delete().eq("id", id);
+        if (error) Swal.fire("Error", error.message, "error");
+        else fetchData();
+    };
+
+    const handleCreateTechStack = async (name, icon) => {
+        if (!name || !icon) return;
+        const { error } = await supabase.from("tech_stacks").insert([{ name, icon }]);
+        if (error) Swal.fire("Error", error.message, "error");
+        else fetchData();
+    };
+
+    const handleDeleteTechStack = async (id) => {
+        const { error } = await supabase.from("tech_stacks").delete().eq("id", id);
+        if (error) Swal.fire("Error", error.message, "error");
+        else fetchData();
+    };
+
     const handleUpdateProjectMedia = async (id, video_url, lottie_url) => {
         const { error } = await supabase.from("projects").update({ video_url, lottie_url }).eq("id", id);
         if (error) Swal.fire("Error", error.message, "error");
@@ -165,6 +261,8 @@ const Admin = () => {
                         { id: "stats", label: "Dashboard", icon: BarChart3 },
                         { id: "blogs", label: "Blog Posts", icon: FileText },
                         { id: "projects", label: "Projects", icon: FolderKanban },
+                        { id: "skills", label: "Skills & More", icon: Code2 },
+                        { id: "settings", label: "Settings", icon: UserCircle },
                     ].map((item) => (
                         <button
                             key={item.id}
@@ -203,14 +301,14 @@ const Admin = () => {
                     <div className="space-y-8 animate-fadeIn">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {[
-                                { label: "Total Projects", value: stats.projects, icon: FolderKanban, color: "blue" },
-                                { label: "Total Blogs", value: stats.blogs, icon: FileText, color: "purple" },
-                                { label: "Total Likes", value: stats.likes, icon: Heart, color: "pink" },
-                                { label: "Project Views", value: stats.views, icon: Eye, color: "indigo" },
+                                { label: "Total Projects", value: stats.projects, icon: FolderKanban, color: "text-blue-400", bg: "bg-blue-500/10" },
+                                { label: "Total Blogs", value: stats.blogs, icon: FileText, color: "text-purple-400", bg: "bg-purple-500/10" },
+                                { label: "Total Likes", value: stats.likes, icon: Heart, color: "text-pink-400", bg: "bg-pink-500/10" },
+                                { label: "Project Views", value: stats.views, icon: Eye, color: "text-indigo-400", bg: "bg-indigo-500/10" },
                             ].map((stat, i) => (
                                 <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-2xl">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className={`p-3 bg-${stat.color}-500/10 rounded-xl text-${stat.color}-400`}>
+                                        <div className={`p-3 ${stat.bg} rounded-xl ${stat.color}`}>
                                             <stat.icon className="w-6 h-6" />
                                         </div>
                                     </div>
@@ -301,48 +399,252 @@ const Admin = () => {
 
                 {activeTab === "projects" && (
                     <div className="space-y-6 animate-fadeIn">
-                        <h2 className="text-2xl font-bold">Manage Projects Media</h2>
-                        <div className="grid grid-cols-1 gap-6">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold">Manage Projects</h2>
+                            <button
+                                onClick={() => {
+                                    setEditingProject(null);
+                                    setNewProject({ Title: "", Description: "", Link: "", Img: "", category: "Design", video_url: "", lottie_url: "" });
+                                    setIsEditingProject(true);
+                                }}
+                                className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-xl transition-all"
+                            >
+                                <Plus className="w-4 h-4" /> New Project
+                            </button>
+                        </div>
+
+                        {isEditingProject && (
+                            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input
+                                        className="bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-indigo-500"
+                                        placeholder="Project Title"
+                                        value={newProject.Title}
+                                        onChange={e => setNewProject({ ...newProject, Title: e.target.value })}
+                                    />
+                                    <input
+                                        className="bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-indigo-500"
+                                        placeholder="Category"
+                                        value={newProject.category}
+                                        onChange={e => setNewProject({ ...newProject, category: e.target.value })}
+                                    />
+                                </div>
+                                <textarea
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 h-24 focus:outline-none focus:border-indigo-500"
+                                    placeholder="Description"
+                                    value={newProject.Description}
+                                    onChange={e => setNewProject({ ...newProject, Description: e.target.value })}
+                                />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input
+                                        className="bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-indigo-500"
+                                        placeholder="Main Image URL"
+                                        value={newProject.Img}
+                                        onChange={e => setNewProject({ ...newProject, Img: e.target.value })}
+                                    />
+                                    <input
+                                        className="bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-indigo-500"
+                                        placeholder="Project Link (Optional)"
+                                        value={newProject.Link}
+                                        onChange={e => setNewProject({ ...newProject, Link: e.target.value })}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input
+                                        className="bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-indigo-500"
+                                        placeholder="Video URL (Hover)"
+                                        value={newProject.video_url}
+                                        onChange={e => setNewProject({ ...newProject, video_url: e.target.value })}
+                                    />
+                                    <input
+                                        className="bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-indigo-500"
+                                        placeholder="Lottie JSON URL"
+                                        value={newProject.lottie_url}
+                                        onChange={e => setNewProject({ ...newProject, lottie_url: e.target.value })}
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-3">
+                                    <button onClick={() => setIsEditingProject(false)} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                                    <button onClick={handleCreateProject} className="bg-indigo-500 px-6 py-2 rounded-xl font-bold">Save Project</button>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 gap-4">
                             {projects.map(project => (
-                                <div key={project.id} className="bg-white/5 border border-white/10 p-6 rounded-2xl flex flex-col md:flex-row gap-6">
-                                    <div className="w-full md:w-48 aspect-video bg-white/10 rounded-xl overflow-hidden">
-                                        <img src={project.Img} alt="" className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="flex-1 space-y-4">
-                                        <h3 className="text-lg font-bold">{project.Title}</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-gray-500 flex items-center gap-1"><Video className="w-3 h-3" /> Video URL (Hover)</label>
-                                                <input
-                                                    id={`v-${project.id}`}
-                                                    defaultValue={project.video_url}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm focus:border-indigo-500 outline-none"
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-gray-500 flex items-center gap-1"><BarChart3 className="w-3 h-3" /> Lottie JSON URL</label>
-                                                <input
-                                                    id={`l-${project.id}`}
-                                                    defaultValue={project.lottie_url}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm focus:border-indigo-500 outline-none"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-end pt-2">
-                                            <button
-                                                onClick={() => {
-                                                    const v = document.getElementById(`v-${project.id}`).value;
-                                                    const l = document.getElementById(`l-${project.id}`).value;
-                                                    handleUpdateProjectMedia(project.id, v, l);
-                                                }}
-                                                className="flex items-center gap-2 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-4 py-1.5 rounded-lg text-sm hover:bg-indigo-500 hover:text-white transition-all"
-                                            >
-                                                <Save className="w-4 h-4" /> Save
-                                            </button>
+                                <div key={project.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <img src={project.Img} alt="" className="w-12 h-12 rounded-lg object-cover bg-white/10" />
+                                        <div>
+                                            <h4 className="font-bold">{project.Title}</h4>
+                                            <span className="text-xs text-indigo-400">{project.category}</span>
                                         </div>
                                     </div>
+                                    <button
+                                        onClick={() => handleDeleteProject(project.id)}
+                                        className="p-2 text-gray-500 hover:text-red-400 transition-colors"
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </button>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === "skills" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Tech Stack Section */}
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl font-bold flex items-center gap-2">
+                                        <Code2 className="w-5 h-5 text-indigo-400" /> Tech Stack
+                                    </h2>
+                                    <button
+                                        onClick={async () => {
+                                            const { value: formValues } = await Swal.fire({
+                                                title: 'Add Skill',
+                                                html:
+                                                    '<input id="swal-input1" class="swal2-input" placeholder="Skill Name">' +
+                                                    '<input id="swal-input2" class="swal2-input" placeholder="Icon URL (Optional)">',
+                                                focusConfirm: false,
+                                                background: "#030014",
+                                                color: "#ffffff",
+                                                preConfirm: () => [
+                                                    document.getElementById('swal-input1').value,
+                                                    document.getElementById('swal-input2').value
+                                                ]
+                                            });
+                                            if (formValues) handleCreateTechStack(formValues[0], formValues[1]);
+                                        }}
+                                        className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {techStacks.map(skill => (
+                                        <div key={skill.id} className="bg-white/5 border border-white/10 p-3 rounded-xl flex items-center justify-between">
+                                            <span className="text-sm">{skill.name}</span>
+                                            <button onClick={() => handleDeleteTechStack(skill.id)} className="text-gray-500 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Certificates Section */}
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl font-bold flex items-center gap-2">
+                                        <Award className="w-5 h-5 text-purple-400" /> Certificates
+                                    </h2>
+                                    <button
+                                        onClick={async () => {
+                                            const { value: url } = await Swal.fire({
+                                                title: 'Add Certificate',
+                                                input: 'url',
+                                                inputPlaceholder: 'Certificate Image URL',
+                                                background: "#030014",
+                                                color: "#ffffff"
+                                            });
+                                            if (url) handleCreateCertificate(url);
+                                        }}
+                                        className="p-2 bg-purple-500/10 text-purple-400 rounded-lg"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {certificates.map(cert => (
+                                        <div key={cert.id} className="bg-white/5 border border-white/10 p-3 rounded-xl flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <img src={cert.Img} alt="" className="w-10 h-10 rounded bg-white/10 object-cover" />
+                                                <span className="text-xs text-gray-400 truncate max-w-[150px]">{cert.Img}</span>
+                                            </div>
+                                            <button onClick={() => handleDeleteCertificate(cert.id)} className="text-gray-500 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === "settings" && (
+                    <div className="max-w-2xl space-y-8 animate-fadeIn">
+                        <h2 className="text-2xl font-bold">Site Settings</h2>
+
+                        <div className="bg-white/5 border border-white/10 p-8 rounded-3xl space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm text-gray-400">Full Name</label>
+                                    <input
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 focus:border-indigo-500 outline-none"
+                                        value={siteSettings.full_name}
+                                        onChange={e => setSiteSettings({ ...siteSettings, full_name: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm text-gray-400">Primary Role</label>
+                                    <input
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 focus:border-indigo-500 outline-none"
+                                        value={siteSettings.role}
+                                        onChange={e => setSiteSettings({ ...siteSettings, role: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm text-gray-400">Typing Words (Comma separated)</label>
+                                <input
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 focus:border-indigo-500 outline-none"
+                                    value={siteSettings.typing_words}
+                                    onChange={e => setSiteSettings({ ...siteSettings, typing_words: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-4 pt-4 border-t border-white/5">
+                                <h3 className="font-bold text-gray-300">Social Links</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                                        <Linkedin className="w-5 h-5 text-blue-400" />
+                                        <input
+                                            className="bg-transparent border-none outline-none text-sm w-full"
+                                            placeholder="LinkedIn URL"
+                                            value={siteSettings.linkedin_url}
+                                            onChange={e => setSiteSettings({ ...siteSettings, linkedin_url: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                                        <Instagram className="w-5 h-5 text-pink-400" />
+                                        <input
+                                            className="bg-transparent border-none outline-none text-sm w-full"
+                                            placeholder="Instagram URL"
+                                            value={siteSettings.instagram_url}
+                                            onChange={e => setSiteSettings({ ...siteSettings, instagram_url: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                                        <Github className="w-5 h-5 text-white" />
+                                        <input
+                                            className="bg-transparent border-none outline-none text-sm w-full"
+                                            placeholder="GitHub URL"
+                                            value={siteSettings.github_url}
+                                            onChange={e => setSiteSettings({ ...siteSettings, github_url: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end pt-6">
+                                <button
+                                    onClick={handleUpdateSiteSettings}
+                                    className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 px-8 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-500/25"
+                                >
+                                    <Save className="w-5 h-5" /> Save Changes
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

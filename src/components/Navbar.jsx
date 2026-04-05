@@ -119,15 +119,17 @@ const Navbar = () => {
                                     <Link
                                         key={item.label}
                                         to={item.href}
-                                        className={`group relative px-1 py-2 text-sm font-medium transition-colors duration-300 ${location.pathname === item.href
-                                            ? "bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent font-semibold"
+                                        className={`group relative px-1 py-2 text-sm font-medium transition-colors duration-300 ${(item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href))
+                                            ? "text-white font-semibold"
                                             : "text-[#e2d3fd] group-hover:text-white"
                                             }`}
                                         onClick={() => setIsOpen(false)}
                                     >
-                                        <span className="relative z-10">{item.label}</span>
+                                        <span className={`relative z-10 ${(item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href)) ? "bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent" : ""}`}>
+                                            {item.label}
+                                        </span>
                                         <span
-                                            className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#6366f1] to-[#a855f7] transform origin-left transition-transform duration-300 ${location.pathname === item.href ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                                            className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#6366f1] to-[#a855f7] transform origin-left transition-transform duration-300 ${(item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href)) ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
                                                 }`}
                                         />
                                     </Link>
@@ -188,9 +190,9 @@ const Navbar = () => {
                             <Link
                                 key={item.label}
                                 to={item.href}
-                                className={`block px-4 py-3 text-lg font-medium transition-all duration-300 ease ${location.pathname === item.href
-                                    ? "bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent font-semibold"
-                                    : "text-[#e2d3fd] hover:text-white"
+                                className={`block px-4 py-3 text-lg font-medium transition-all duration-300 ease ${(item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href))
+                                        ? "bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent font-semibold"
+                                        : "text-[#e2d3fd] hover:text-white"
                                     }`}
                                 style={{
                                     transitionDelay: `${index * 100}ms`,
