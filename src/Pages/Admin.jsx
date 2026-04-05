@@ -14,6 +14,12 @@ import {
     Eye,
     Video,
     Star,
+    Heart,
+    Award,
+    Code2,
+    UserCircle,
+    Instagram,
+    Linkedin,
     Github,
     Edit2,
     Upload,
@@ -39,7 +45,8 @@ const Admin = () => {
         instagram_url: "",
         github_url: "",
         meta_title: "",
-        meta_description: ""
+        meta_description: "",
+        about_image: ""
     });
     const [isEditingBlog, setIsEditingBlog] = useState(false);
     const [editingBlog, setEditingBlog] = useState(null);
@@ -767,6 +774,34 @@ const Admin = () => {
                                             onChange={e => setSiteSettings({ ...siteSettings, github_url: e.target.value })}
                                         />
                                     </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 pt-4 border-t border-white/5">
+                                <h3 className="font-bold text-gray-300">About Me Photo</h3>
+                                <div className="flex gap-4">
+                                    <input
+                                        className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-indigo-500"
+                                        placeholder="About Photo URL"
+                                        value={siteSettings.about_image}
+                                        onChange={e => setSiteSettings({ ...siteSettings, about_image: e.target.value })}
+                                    />
+                                    <label className="cursor-pointer bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-6 py-3 rounded-xl transition-all flex items-center gap-2">
+                                        <Upload className="w-5 h-5" />
+                                        <span>Upload Photo</span>
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={async (e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    const url = await handleFileUpload(file);
+                                                    if (url) setSiteSettings({ ...siteSettings, about_image: url });
+                                                }
+                                            }}
+                                        />
+                                    </label>
                                 </div>
                             </div>
 
