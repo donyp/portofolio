@@ -341,10 +341,35 @@ const Admin = () => {
 
             {/* Main Content */}
             <main className="flex-1 p-6 md:p-10 overflow-y-auto">
-                {/* Header Mobile */}
-                <div className="md:hidden flex items-center justify-between mb-8">
-                    <span className="font-bold text-xl tracking-tight">Admin Dashboard</span>
-                    <button onClick={() => { sessionStorage.clear(); window.location.href = "/"; }}><X /></button>
+                {/* Header Mobile - Enhanced with Navigation */}
+                <div className="md:hidden mb-8 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <span className="font-bold text-xl tracking-tight">Admin CMS</span>
+                        <button onClick={() => { sessionStorage.clear(); window.location.href = "/"; }} className="p-2 bg-white/5 rounded-lg"><X className="w-5 h-5 text-gray-400" /></button>
+                    </div>
+
+                    {/* Horizontal Scrolling Tabs for Mobile */}
+                    <div className="flex overflow-x-auto pb-2 gap-2 scrollbar-hide no-scrollbar">
+                        {[
+                            { id: "stats", label: "Dashboard", icon: BarChart3 },
+                            { id: "blogs", label: "Blog", icon: FileText },
+                            { id: "projects", label: "Projects", icon: FolderKanban },
+                            { id: "skills", label: "Skills", icon: Code2 },
+                            { id: "settings", label: "Settings", icon: UserCircle },
+                        ].map((item) => (
+                            <button
+                                key={item.id}
+                                onClick={() => setActiveTab(item.id)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl whitespace-nowrap transition-all border ${activeTab === item.id
+                                    ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/30"
+                                    : "bg-white/5 text-gray-400 border-transparent hover:border-white/10"
+                                    }`}
+                            >
+                                <item.icon className="w-4 h-4" />
+                                <span className="text-sm font-medium">{item.label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {activeTab === "stats" && (
@@ -454,11 +479,11 @@ const Admin = () => {
 
                         <div className="grid grid-cols-1 gap-4">
                             {blogs.map(blog => (
-                                <div key={blog.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <img src={blog.image_url} alt="" className="w-12 h-12 rounded-lg object-cover bg-white/10" />
-                                        <div>
-                                            <h4 className="font-bold">{blog.title}</h4>
+                                <div key={blog.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4 overflow-hidden">
+                                        <img src={blog.image_url} alt="" className="w-12 h-12 rounded-lg object-cover bg-white/10 shrink-0" />
+                                        <div className="min-w-0">
+                                            <h4 className="font-bold truncate">{blog.title}</h4>
                                             <div className="flex items-center gap-3 mt-1">
                                                 <span className="text-xs text-gray-500 flex items-center gap-1">
                                                     <Eye className="w-3 h-3" /> {blog.views || 0}
@@ -591,11 +616,11 @@ const Admin = () => {
 
                         <div className="grid grid-cols-1 gap-4">
                             {projects.map(project => (
-                                <div key={project.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <img src={project.Img} alt="" className="w-12 h-12 rounded-lg object-cover bg-white/10" />
-                                        <div>
-                                            <h4 className="font-bold">{project.Title}</h4>
+                                <div key={project.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4 overflow-hidden">
+                                        <img src={project.Img} alt="" className="w-12 h-12 rounded-lg object-cover bg-white/10 shrink-0" />
+                                        <div className="min-w-0">
+                                            <h4 className="font-bold truncate">{project.Title}</h4>
                                             <span className="text-xs text-indigo-400">{project.category}</span>
                                         </div>
                                     </div>

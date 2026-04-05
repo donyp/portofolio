@@ -278,7 +278,7 @@ const ProjectDetails = () => {
       </div>
 
       <div className="relative" key={id}>
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-16">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-8 md:py-16">
           <div className="flex items-center space-x-2 md:space-x-4 mb-8 md:mb-12 animate-fadeIn">
             <button
               onClick={() => {

@@ -108,7 +108,7 @@ const ContactPage = () => {
   };
 
   return (
-    <div className="px-[5%] sm:px-[5%] lg:px-[10%] min-h-screen flex flex-col justify-center" id="Contact">
+    <div className="px-[5%] sm:px-[5%] lg:px-[10%] py-24 md:py-0 md:min-h-screen flex flex-col justify-center" id="Contact">
       <div className="container mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start justify-center">
           {/* Comments Section */}

@@ -66,7 +66,7 @@ const BlogDetail = () => {
     if (!blog) return null;
 
     return (
-        <div className="min-h-screen bg-[#030014] text-white pt-24 pb-12 px-[5%] md:px-[10%]">
+        <div className="min-h-screen bg-[#030014] text-white pt-32 pb-12 px-[5%] md:px-[10%]">
             <div className="max-w-4xl mx-auto">
                 {/* Back Button */}
                 <button
