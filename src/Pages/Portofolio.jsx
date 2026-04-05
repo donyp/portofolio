@@ -310,19 +310,19 @@ export default function FullWidthTabs() {
           <TabPanel value={value} index={0} dir={theme.direction}>
             <div className="container mx-auto flex flex-col md:flex-row gap-5 mb-8">
               {/* Search Bar */}
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
                 <input
                   type="text"
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-white/10 bg-white/5 backdrop-blur-md rounded-xl text-sm text-gray-300 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all duration-300"
+                  className="w-full pl-10 pr-4 py-2.5 border border-white/10 bg-white/5 backdrop-blur-md rounded-xl text-sm text-gray-300 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all duration-300"
                 />
               </div>
 
               {/* Category Filters */}
-              <div className="flex-1 flex flex-wrap gap-2 md:justify-end">
+              <div className="flex-1 flex flex-wrap gap-2 justify-start md:justify-start">
                 {categories.map((category, index) => (
                   <button
                     key={index}
