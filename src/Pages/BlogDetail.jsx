@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
-import { Calendar, Tag, ArrowLeft, Clock, Share2, Facebook, Twitter, Linkedin } from "lucide-react";
+import { Calendar, Tag, ArrowLeft, Clock, Share2, Facebook, Twitter, Linkedin, Eye, Heart } from "lucide-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
@@ -122,7 +122,7 @@ const BlogDetail = () => {
                         </div>
                         <div className="flex items-center gap-2 text-gray-400">
                             <Clock className="w-5 h-5 text-gray-500" />
-                            {Math.ceil(blog.content.length / 500)} min read
+                            {Math.ceil((blog.content || '').length / 500)} min read
                         </div>
                         <div className="flex-1" />
                         <div className="flex items-center gap-6">
