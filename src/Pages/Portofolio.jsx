@@ -310,16 +310,14 @@ export default function FullWidthTabs() {
           <TabPanel value={value} index={0} dir={theme.direction}>
             <div className="container mx-auto flex flex-col md:flex-row gap-5 mb-8">
               {/* Search Bar */}
-              <div className="relative w-full md:w-80 group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="w-4 h-4 text-gray-400 group-focus-within:text-purple-400 transition-colors" />
-                </div>
+              <div className="flex items-center relative w-full md:w-80 bg-white/5 border border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500/50 transition-all duration-300 group">
+                <Search className="ml-3 w-4 h-4 text-gray-400 group-focus-within:text-purple-400 transition-colors" />
                 <input
                   type="text"
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/50 transition-all duration-300"
+                  className="w-full pl-3 pr-4 py-2.5 bg-transparent border-none text-sm text-gray-200 placeholder-gray-500 focus:outline-none"
                 />
               </div>
 

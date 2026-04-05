@@ -26,7 +26,7 @@ const LatestBlog = () => {
     if (loading || blogs.length === 0) return null;
 
     return (
-        <section className="py-20 px-[5%] md:px-[10%] bg-[#030014] relative overflow-hidden" id="LatestBlog">
+        <section className="py-20 px-[5%] md:px-[10%] bg-transparent relative overflow-hidden" id="LatestBlog">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-4">
                     <div data-aos="fade-right">
