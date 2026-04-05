@@ -1,8 +1,49 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, ArrowRight } from 'lucide-react';
+import { ExternalLink, ArrowRight, Heart, Eye, Star } from 'lucide-react';
+import { supabase } from '../supabase';
 
-const CardProject = ({ Img, Title, Description, Link: ProjectLink, id }) => {
+const CardProject = ({ Img, Title, Description, Link: ProjectLink, id, likes = 0, views = 0, video_url = null, average_rating = 0 }) => {
+  const [likeCount, setLikeCount] = useState(likes);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    // Sync initial likes from props
+    setLikeCount(likes);
+    // Check if user already liked
+    const likedProjects = JSON.parse(localStorage.getItem('likedProjects') || '[]');
+    if (likedProjects.includes(id)) {
+      setIsLiked(true);
+    }
+  }, [id, likes]);
+
+  const handleLike = async (e) => {
+    e.preventDefault(); // Prevent navigating to detail page if button is clicked
+    if (isLiked) return;
+
+    try {
+      const newLikes = likeCount + 1;
+      setLikeCount(newLikes);
+      setIsLiked(true);
+
+      const likedProjects = JSON.parse(localStorage.getItem('likedProjects') || '[]');
+      localStorage.setItem('likedProjects', JSON.stringify([...likedProjects, id]));
+
+      // Update projects array in localStorage to prevent flashing old data
+      const cachedProjects = JSON.parse(localStorage.getItem('projects') || '[]');
+      const updatedProjects = cachedProjects.map(p =>
+        p.id === id ? { ...p, likes: newLikes } : p
+      );
+      localStorage.setItem('projects', JSON.stringify(updatedProjects));
+
+      const { error } = await supabase.from('projects').update({ likes: newLikes }).eq('id', id);
+      if (error) console.error("Supabase update error:", error);
+    } catch (err) {
+      console.error("Error updating likes:", err);
+    }
+  };
+
   // Handle kasus ketika ProjectLink kosong
   const handleLiveDemo = (e) => {
     if (!ProjectLink) {
@@ -20,21 +61,60 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id }) => {
     }
   };
 
+  const formatNumber = (num) => {
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+    }
+    return num;
+  };
+
 
   return (
-    <div className="group relative w-full">
-
+    <div className="group relative w-full" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-lg border border-white/10 shadow-2xl transition-all duration-300 hover:shadow-purple-500/20">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 opacity-50 group-hover:opacity-70 transition-opacity duration-300"></div>
 
         <div className="relative p-5 z-10">
-          <div className="relative overflow-hidden rounded-lg">
-            <img
-              src={Img}
-              alt={Title}
-              className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-              loading="lazy"
-            />
+          <div className="relative overflow-hidden rounded-lg aspect-video">
+            {video_url && isHovered ? (
+              <video
+                src={video_url}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover transition-transform duration-500 scale-105"
+              />
+            ) : (
+              <img
+                src={Img}
+                alt={Title}
+                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                loading="lazy"
+              />
+            )}
+
+            <div className="absolute top-4 right-4 flex space-x-2 z-20">
+              {average_rating > 0 && (
+                <div className="bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center justify-center border border-white/10">
+                  <Star className="w-3 h-3 md:w-3.5 md:h-3.5 text-yellow-400 mr-1.5 fill-yellow-400" />
+                  <span className="text-white text-xs font-medium">{average_rating}</span>
+                </div>
+              )}
+              <div className="bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center justify-center border border-white/10">
+                <Eye className="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-400 mr-1.5" />
+                <span className="text-white text-xs font-medium">{formatNumber(views)}</span>
+              </div>
+              <button
+                onClick={handleLike}
+                disabled={isLiked}
+                className={`backdrop-blur-md px-3 py-1.5 rounded-full flex items-center justify-center border transition-all duration-300 ${isLiked ? 'bg-pink-500/20 border-pink-500/50 cursor-default' : 'bg-black/50 border-white/10 hover:bg-black/70 hover:border-pink-500/50'
+                  }`}
+              >
+                <Heart className={`w-3 h-3 md:w-3.5 md:h-3.5 mr-1.5 ${isLiked ? 'fill-pink-400 text-pink-400' : 'text-pink-400'}`} />
+                <span className="text-white text-xs font-medium">{formatNumber(likeCount)}</span>
+              </button>
+            </div>
           </div>
 
           <div className="mt-4 space-y-3">

@@ -15,7 +15,7 @@ import TechStackIcon from "../components/TechStackIcon";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import Certificate from "../components/Certificate";
-import { Code, Award, Boxes } from "lucide-react";
+import { Code, Award, Boxes, Search, Filter } from "lucide-react";
 
 
 const ToggleButton = ({ onClick, isShowingMore }) => (
@@ -102,29 +102,16 @@ function a11yProps(index) {
   };
 }
 
-// techStacks tetap sama
-const techStacks = [
-  { icon: "Photoshop.svg", language: "Photoshop" },
-  { icon: "Illustrator.svg", language: "Illustrator" },
-  { icon: "Lightroom.svg", language: "Lightroom" },
-  { icon: "Coreldraw.svg", language: "CorelDraw" },
-  { icon: "Canva.svg", language: "Canva" },
-  { icon: "Meta.svg", language: "Meta Ads" },
-  { icon: "Figma.svg", language: "Figma" },
-  { icon: "Sketchup.svg", language: "SketchUp" },
-  { icon: "AE.svg", language: "After Effect" },
-  { icon: "AM.svg", language: "Alight Motion" },
-  { icon: "Capcut.svg", language: "Capcut" },
-  { icon: "Photopea.svg", language: "Photopea" },
-];
-
 export default function FullWidthTabs() {
   const theme = useTheme();
   const [value, setValue] = useState(0);
   const [projects, setProjects] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [techStacks, setTechStacks] = useState([]);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllCertificates, setShowAllCertificates] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
   const isMobile = window.innerWidth < 768;
   const initialItems = isMobile ? 4 : 6;
 
@@ -138,25 +125,30 @@ export default function FullWidthTabs() {
   const fetchData = useCallback(async () => {
     try {
       // Mengambil data dari Supabase secara paralel
-      const [projectsResponse, certificatesResponse] = await Promise.all([
-        supabase.from("projects").select("*").order('id', { ascending: true }),
-        supabase.from("certificates").select("*").order('id', { ascending: true }),
+      const [projectsResponse, certificatesResponse, techStacksResponse] = await Promise.all([
+        supabase.from("projects").select("*").order('id', { ascending: false }),
+        supabase.from("certificates").select("*").order('id', { ascending: false }),
+        supabase.from("tech_stacks").select("*").order('id', { ascending: true })
       ]);
 
       // Error handling untuk setiap request
       if (projectsResponse.error) throw projectsResponse.error;
       if (certificatesResponse.error) throw certificatesResponse.error;
+      if (techStacksResponse.error) throw techStacksResponse.error;
 
       // Supabase mengembalikan data dalam properti 'data'
       const projectData = projectsResponse.data || [];
       const certificateData = certificatesResponse.data || [];
+      const techStackData = techStacksResponse.data || [];
 
       setProjects(projectData);
       setCertificates(certificateData);
+      setTechStacks(techStackData);
 
-      // Store in localStorage (fungsionalitas ini tetap dipertahankan)
+      // Store in localStorage
       localStorage.setItem("projects", JSON.stringify(projectData));
       localStorage.setItem("certificates", JSON.stringify(certificateData));
+      localStorage.setItem("techStacks", JSON.stringify(techStackData));
     } catch (error) {
       console.error("Error fetching data from Supabase:", error.message);
     }
@@ -165,14 +157,14 @@ export default function FullWidthTabs() {
 
 
   useEffect(() => {
-    // Coba ambil dari localStorage dulu untuk laod lebih cepat
+    // Coba ambil dari localStorage dulu untuk load lebih cepat
     const cachedProjects = localStorage.getItem('projects');
     const cachedCertificates = localStorage.getItem('certificates');
+    const cachedTechStacks = localStorage.getItem('techStacks');
 
-    if (cachedProjects && cachedCertificates) {
-      setProjects(JSON.parse(cachedProjects));
-      setCertificates(JSON.parse(cachedCertificates));
-    }
+    if (cachedProjects) setProjects(JSON.parse(cachedProjects));
+    if (cachedCertificates) setCertificates(JSON.parse(cachedCertificates));
+    if (cachedTechStacks) setTechStacks(JSON.parse(cachedTechStacks));
 
     fetchData(); // Tetap panggil fetchData untuk sinkronisasi data terbaru
   }, [fetchData]);
@@ -189,8 +181,18 @@ export default function FullWidthTabs() {
     }
   }, []);
 
-  const displayedProjects = showAllProjects ? projects : projects.slice(0, initialItems);
+  const filteredProjects = projects.filter(project => {
+    const matchesCategory = activeCategory === "All" || project.category === activeCategory;
+    const matchesSearch = project.Title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.Description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  const displayedProjects = showAllProjects ? filteredProjects : filteredProjects.slice(0, initialItems);
   const displayedCertificates = showAllCertificates ? certificates : certificates.slice(0, initialItems);
+
+  // Extract unique categories
+  const categories = ["All", ...new Set(projects.map(p => p.category).filter(Boolean))];
 
   // Sisa dari komponen (return statement) tidak ada perubahan
   return (
@@ -306,6 +308,36 @@ export default function FullWidthTabs() {
           onChangeIndex={setValue}
         >
           <TabPanel value={value} index={0} dir={theme.direction}>
+            <div className="container mx-auto flex flex-col md:flex-row gap-5 mb-8">
+              {/* Search Bar */}
+              <div className="relative w-full md:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-white/10 bg-white/5 backdrop-blur-md rounded-xl text-sm text-gray-300 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all duration-300"
+                />
+              </div>
+
+              {/* Category Filters */}
+              <div className="flex-1 flex flex-wrap gap-2 md:justify-end">
+                {categories.map((category, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setActiveCategory(category)}
+                    className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 ${activeCategory === category
+                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-purple-500/50 text-white"
+                      : "bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10 hover:text-white hover:border-white/20"
+                      }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="container mx-auto flex justify-center items-center overflow-hidden">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-5">
                 {displayedProjects.map((project, index) => (
@@ -320,12 +352,21 @@ export default function FullWidthTabs() {
                       Description={project.Description}
                       Link={project.Link}
                       id={project.id}
+                      likes={project.likes || 0}
+                      views={project.views || 0}
+                      video_url={project.video_url}
+                      average_rating={project.average_rating}
                     />
                   </div>
                 ))}
               </div>
             </div>
-            {projects.length > initialItems && (
+            {filteredProjects.length === 0 && (
+              <div className="w-full text-center py-10 mt-10">
+                <p className="text-gray-400 text-sm">No projects found matching your criteria.</p>
+              </div>
+            )}
+            {filteredProjects.length > initialItems && (
               <div className="mt-6 w-full flex justify-start">
                 <ToggleButton
                   onClick={() => toggleShowMore('projects')}

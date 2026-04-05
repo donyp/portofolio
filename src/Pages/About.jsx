@@ -2,6 +2,7 @@ import React, { useEffect, memo, useMemo } from "react"
 import { FileText, Code, Award, Globe, ArrowUpRight, Sparkles, UserCheck } from "lucide-react"
 import AOS from 'aos'
 import 'aos/dist/aos.css'
+import { supabase } from "../supabase"
 
 // Memoized Components
 const Header = memo(() => (
@@ -249,6 +250,24 @@ const AboutPage = () => {
                   <Code className="w-4 h-4 sm:w-5 sm:h-5" /> View Projects
                 </button>
               </a>
+              {/* <button
+                data-aos="fade-up"
+                data-aos-duration="1200"
+                onClick={async () => {
+                  try {
+                    const { data } = await supabase.from('user_analytics').select('click_count').eq('action_type', 'resume_download').single();
+                    if (data) {
+                      await supabase.from('user_analytics').update({ click_count: data.click_count + 1 }).eq('action_type', 'resume_download');
+                    }
+                  } catch (error) {
+                    console.error("Analytics error:", error);
+                  }
+                  window.open("https://docs.google.com/document/d/YOUR_RESUME_LINK", "_blank");
+                }}
+                className="w-full lg:w-auto sm:px-6 py-2 sm:py-3 rounded-lg bg-gradient-to-r from-[#6366f1] to-[#a855f7] text-white font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center lg:justify-start gap-2 shadow-lg shadow-[#a855f7]/20"
+              >
+                <FileText className="w-4 h-4 sm:w-5 sm:h-5" /> Download CV
+              </button> */}
             </div>
           </div>
 
@@ -264,7 +283,7 @@ const AboutPage = () => {
         </a>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-20px); }
