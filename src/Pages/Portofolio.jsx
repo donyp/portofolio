@@ -113,7 +113,7 @@ export default function FullWidthTabs() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const isMobile = window.innerWidth < 768;
-  const initialItems = isMobile ? 4 : 6;
+  const initialItems = isMobile ? 2 : 4;
 
   useEffect(() => {
     AOS.init({

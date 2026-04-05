@@ -6,6 +6,13 @@ import { ArrowRight, Calendar, Tag, Eye, Heart } from "lucide-react";
 const LatestBlog = () => {
     const [blogs, setBlogs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     useEffect(() => {
         const fetchLatestBlogs = async () => {
@@ -24,6 +31,8 @@ const LatestBlog = () => {
     }, []);
 
     if (loading || blogs.length === 0) return null;
+
+    const displayedBlogs = isMobile ? blogs.slice(0, 2) : blogs;
 
     return (
         <section className="py-20 px-[5%] md:px-[10%] bg-transparent relative overflow-hidden" id="LatestBlog">
@@ -46,7 +55,7 @@ const LatestBlog = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {blogs.map((blog, index) => (
+                    {displayedBlogs.map((blog, index) => (
                         <Link
                             key={blog.id}
                             to={`/blog/${blog.id}`}
