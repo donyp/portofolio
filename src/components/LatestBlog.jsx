@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 import { Link } from "react-router-dom";
-import { ArrowRight, Calendar, Tag } from "lucide-react";
+import { ArrowRight, Calendar, Tag, Eye, Heart } from "lucide-react";
 
 const LatestBlog = () => {
     const [blogs, setBlogs] = useState([]);
@@ -72,8 +72,20 @@ const LatestBlog = () => {
                                 <h3 className="text-lg font-bold text-white mb-3 group-hover:text-purple-400 transition-colors line-clamp-2">
                                     {blog.title}
                                 </h3>
-                                <div className="mt-auto flex items-center gap-1 text-purple-400 font-medium text-xs">
-                                    Read Article <ArrowRight className="w-3 h-3" />
+                                <div className="mt-auto flex items-center justify-between">
+                                    <div className="flex items-center gap-1 text-purple-400 font-medium text-xs">
+                                        Read Article <ArrowRight className="w-3 h-3" />
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-1 text-gray-500 text-[10px]">
+                                            <Eye className="w-3 h-3" />
+                                            {blog.views || 0}
+                                        </div>
+                                        <div className="flex items-center gap-1 text-gray-500 text-[10px]">
+                                            <Heart className="w-3 h-3" />
+                                            {blog.likes || 0}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </Link>

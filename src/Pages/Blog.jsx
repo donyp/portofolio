@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 import { Link } from "react-router-dom";
-import { Calendar, Tag, ArrowRight, Search } from "lucide-react";
+import { Calendar, Tag, ArrowRight, Search, Eye, Heart } from "lucide-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
@@ -82,6 +82,14 @@ const Blog = () => {
                                         <div className="flex items-center gap-1">
                                             <Calendar className="w-3 h-3" />
                                             {new Date(blog.created_at).toLocaleDateString()}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Eye className="w-3 h-3" />
+                                            {blog.views || 0}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Heart className="w-3 h-3" />
+                                            {blog.likes || 0}
                                         </div>
                                     </div>
                                     <h3 className="text-xl font-bold text-white mb-3 group-hover:text-purple-400 transition-colors line-clamp-2">

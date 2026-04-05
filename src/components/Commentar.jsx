@@ -175,6 +175,7 @@ const Komentar = () => {
     const [isCreatorMode, setIsCreatorMode] = useState(false);
     const [error, setError] = useState('');
     const [replyingTo, setReplyingTo] = useState(null);
+    const [showAll, setShowAll] = useState(false);
 
     const handleLogoClick = () => {
         const password = prompt("Enter Creator Access Code:");
@@ -345,38 +346,59 @@ const Komentar = () => {
                             <p className="text-gray-400">No comments yet. Start the conversation!</p>
                         </div>
                     ) : (
-                        comments.map((comment, index) => (
-                            <div key={comment.id} className="space-y-4">
-                                <Comment
-                                    comment={comment}
-                                    formatDate={formatDate}
-                                    index={index + (pinnedComment ? 1 : 0)}
-                                    onReply={isCreatorMode ? (c) => setReplyingTo(c) : null}
-                                />
-                                {replyingTo?.id === comment.id && (
-                                    <div className="ml-8 sm:ml-12 bg-white/5 p-4 rounded-2xl border border-white/10">
-                                        <CommentForm
-                                            onSubmit={(data) => handleCommentSubmit({ ...data, parentId: comment.id })}
-                                            isSubmitting={isSubmitting}
-                                            placeholder={`Reply to ${comment.user_name}...`}
-                                            buttonText="Post Reply"
-                                            onCancel={() => setReplyingTo(null)}
-                                            showNameInput={false}
-                                            initialName="Doni"
-                                        />
-                                    </div>
-                                )}
-                                {replies[comment.id]?.map((reply) => (
+                        <>
+                            {(showAll ? comments : comments.slice(0, 3)).map((comment, index) => (
+                                <div key={comment.id} className="space-y-4">
                                     <Comment
-                                        key={reply.id}
-                                        comment={reply}
+                                        comment={comment}
                                         formatDate={formatDate}
-                                        isReply={true}
-                                        replyToName={comment.user_name}
+                                        index={index + (pinnedComment ? 1 : 0)}
+                                        onReply={isCreatorMode ? (c) => setReplyingTo(c) : null}
                                     />
-                                ))}
-                            </div>
-                        ))
+                                    {replyingTo?.id === comment.id && (
+                                        <div className="ml-8 sm:ml-12 bg-white/5 p-4 rounded-2xl border border-white/10">
+                                            <CommentForm
+                                                onSubmit={(data) => handleCommentSubmit({ ...data, parentId: comment.id })}
+                                                isSubmitting={isSubmitting}
+                                                placeholder={`Reply to ${comment.user_name}...`}
+                                                buttonText="Post Reply"
+                                                onCancel={() => setReplyingTo(null)}
+                                                showNameInput={false}
+                                                initialName="Doni"
+                                            />
+                                        </div>
+                                    )}
+                                    {replies[comment.id]?.map((reply) => (
+                                        <Comment
+                                            key={reply.id}
+                                            comment={reply}
+                                            formatDate={formatDate}
+                                            isReply={true}
+                                            replyToName={comment.user_name}
+                                        />
+                                    ))}
+                                </div>
+                            ))}
+
+                            {comments.length > 3 && (
+                                <button
+                                    onClick={() => setShowAll(!showAll)}
+                                    className="w-full py-3 mt-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-indigo-400 hover:text-indigo-300 transition-all font-medium text-sm flex items-center justify-center gap-2"
+                                >
+                                    {showAll ? (
+                                        <>
+                                            <span>See Less</span>
+                                            <X className="w-4 h-4" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>See More ({comments.length - 3} more)</span>
+                                            <MessageCircle className="w-4 h-4" />
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

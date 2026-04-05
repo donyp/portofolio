@@ -10,6 +10,8 @@ const BlogDetail = () => {
     const navigate = useNavigate();
     const [blog, setBlog] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [likeCount, setLikeCount] = useState(0);
+    const [isLiked, setIsLiked] = useState(false);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -29,8 +31,34 @@ const BlogDetail = () => {
             navigate("/blog");
         } else {
             setBlog(data);
+            setLikeCount(data.likes || 0);
+
+            // Check if liked
+            const likedBlogs = JSON.parse(localStorage.getItem('likedBlogs') || '[]');
+            if (likedBlogs.includes(id)) setIsLiked(true);
+
+            // Increment views if not seen this session
+            const viewedBlogs = JSON.parse(sessionStorage.getItem('viewedBlogs') || '[]');
+            if (!viewedBlogs.includes(id)) {
+                const newViews = (data.views || 0) + 1;
+                await supabase.from('blogs').update({ views: newViews }).eq('id', id);
+                sessionStorage.setItem('viewedBlogs', JSON.stringify([...viewedBlogs, id]));
+            }
         }
         setLoading(false);
+    };
+
+    const handleLike = async () => {
+        if (isLiked) return;
+
+        const newLikes = likeCount + 1;
+        setLikeCount(newLikes);
+        setIsLiked(true);
+
+        const likedBlogs = JSON.parse(localStorage.getItem('likedBlogs') || '[]');
+        localStorage.setItem('likedBlogs', JSON.stringify([...likedBlogs, id]));
+
+        await supabase.from('blogs').update({ likes: newLikes }).eq('id', id);
     };
 
     const shareOnSocial = (platform) => {
@@ -92,9 +120,24 @@ const BlogDetail = () => {
                             <Calendar className="w-5 h-5 text-gray-500" />
                             {new Date(blog.created_at).toLocaleDateString()}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-gray-400">
                             <Clock className="w-5 h-5 text-gray-500" />
                             {Math.ceil(blog.content.length / 500)} min read
+                        </div>
+                        <div className="flex-1" />
+                        <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-2">
+                                <Eye className="w-5 h-5 text-gray-500" />
+                                {blog.views || 0}
+                            </div>
+                            <button
+                                onClick={handleLike}
+                                disabled={isLiked}
+                                className={`flex items-center gap-2 transition-all ${isLiked ? 'text-pink-500' : 'text-gray-400 hover:text-pink-500'}`}
+                            >
+                                <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+                                {likeCount}
+                            </button>
                         </div>
                     </div>
                 </div>
