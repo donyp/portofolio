@@ -6,6 +6,7 @@ const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [activeSection, setActiveSection] = useState("Home");
+    const [scrollProgress, setScrollProgress] = useState(0);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -13,13 +14,20 @@ const Navbar = () => {
         { href: "/", label: "Home", type: "section" },
         { href: "#About", label: "About", type: "section" },
         { href: "#Portofolio", label: "Works", type: "section" },
+        { href: "/services", label: "Services", type: "route" },
         { href: "/blog", label: "Blog", type: "route" },
         { href: "#Contact", label: "Contact", type: "section" },
     ];
 
     useEffect(() => {
         const handleScroll = () => {
-            setScrolled(window.scrollY > 20);
+            const currentPosition = window.scrollY;
+            setScrolled(currentPosition > 20);
+
+            // Scroll Progress
+            const totalScroll = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            setScrollProgress(totalScroll > 0 ? (currentPosition / totalScroll) * 100 : 0);
+
             const sections = navItems
                 .filter(item => item.type === "section" && item.href.startsWith("#"))
                 .map(item => {
@@ -34,7 +42,6 @@ const Navbar = () => {
                     return null;
                 }).filter(Boolean);
 
-            const currentPosition = window.scrollY;
             const active = sections.find(section =>
                 currentPosition >= section.offset &&
                 currentPosition < section.offset + section.height
@@ -61,6 +68,17 @@ const Navbar = () => {
     const scrollToSection = (e, href) => {
         e.preventDefault();
         setIsOpen(false);
+
+        // Handle Home link - scroll to top
+        if (href === "/") {
+            if (location.pathname !== "/") {
+                navigate("/");
+                setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
+            } else {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+            return;
+        }
 
         // If on a different page and clicking a section link, navigate to home first
         if (location.pathname !== "/") {
@@ -94,6 +112,12 @@ const Navbar = () => {
                     : "bg-transparent"
                 }`}
         >
+            {/* Scroll Progress Bar */}
+            <div
+                className="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#a855f7] to-[#6366f1] transition-width duration-150 ease-out"
+                style={{ width: `${scrollProgress}%` }}
+            />
+
             <div className="mx-auto px-[5%] sm:px-[5%] lg:px-[10%]">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
@@ -164,6 +188,7 @@ const Navbar = () => {
                     <div className="md:hidden">
                         <button
                             onClick={() => setIsOpen(!isOpen)}
+                            aria-label="Toggle Menu"
                             className={`relative p-2 text-[#e2d3fd] hover:text-white transition-transform duration-300 ease-in-out transform ${isOpen ? "rotate-90 scale-125" : "rotate-0 scale-100"
                                 }`}
                         >
@@ -191,8 +216,8 @@ const Navbar = () => {
                                 key={item.label}
                                 to={item.href}
                                 className={`block px-4 py-3 text-lg font-medium transition-all duration-300 ease ${(item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href))
-                                        ? "bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent font-semibold"
-                                        : "text-[#e2d3fd] hover:text-white"
+                                    ? "bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent font-semibold"
+                                    : "text-[#e2d3fd] hover:text-white"
                                     }`}
                                 style={{
                                     transitionDelay: `${index * 100}ms`,

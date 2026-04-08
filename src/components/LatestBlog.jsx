@@ -19,7 +19,7 @@ const LatestBlog = () => {
             const { data, error } = await supabase
                 .from("blogs")
                 .select("*")
-                .order("created_at", { ascending: false })
+                .order("id", { ascending: false })
                 .limit(3);
 
             if (error) console.error("Error fetching latest blogs:", error);

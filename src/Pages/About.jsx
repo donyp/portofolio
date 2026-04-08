@@ -3,6 +3,7 @@ import { FileText, Code, Award, Globe, ArrowUpRight, Sparkles, UserCheck } from 
 import AOS from 'aos'
 import 'aos/dist/aos.css'
 import { supabase } from "../supabase"
+import Timeline from "../components/Timeline"
 
 // Memoized Components
 const Header = memo(() => (
@@ -294,6 +295,9 @@ const AboutPage = () => {
           </div>
         </a>
       </div>
+
+      {/* Timeline Section */}
+      <Timeline />
 
       <style>{`
         @keyframes float {

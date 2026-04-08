@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import React, { useState } from 'react';
 import "./index.css";
 import Home from "./Pages/Home";
@@ -9,14 +9,62 @@ import Portofolio from "./Pages/Portofolio";
 import ContactPage from "./Pages/Contact";
 import ProjectDetails from "./components/ProjectDetail";
 import WelcomeScreen from "./Pages/WelcomeScreen";
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import NotFoundPage from "./Pages/404";
 import Blog from "./Pages/Blog";
 import BlogDetail from "./Pages/BlogDetail";
 import LatestBlog from "./components/LatestBlog";
 import Admin from "./Pages/Admin";
+import Services from "./Pages/Services";
+import Testimonials from "./components/Testimonials";
 import { supabase } from "./supabase";
 import { useEffect } from "react";
+
+// Page transition wrapper
+const PageTransition = ({ children }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    transition={{ duration: 0.3, ease: "easeInOut" }}
+  >
+    {children}
+  </motion.div>
+);
+
+// Page view tracker
+const usePageViewTracker = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const trackPageView = async () => {
+      try {
+        const visitorId = localStorage.getItem("visitor_id") || (() => {
+          const id = crypto.randomUUID?.() || Math.random().toString(36).substr(2, 9);
+          localStorage.setItem("visitor_id", id);
+          return id;
+        })();
+
+        const deviceType = window.innerWidth < 768 ? "mobile" : "desktop";
+
+        await supabase.from("page_views").insert({
+          page_path: location.pathname,
+          visitor_id: visitorId,
+          device_type: deviceType
+        });
+      } catch (err) {
+        // Silently fail - analytics shouldn't break the app
+      }
+    };
+
+    trackPageView();
+  }, [location.pathname]);
+};
+
+const PageViewTracker = () => {
+  usePageViewTracker();
+  return null;
+};
 
 const LandingPage = ({ showWelcome, setShowWelcome }) => {
   return (
@@ -35,6 +83,7 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
           <LatestBlog />
           <About />
           <Portofolio />
+          <Testimonials />
           <ContactPage />
           <footer>
             <center>
@@ -59,7 +108,7 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
 };
 
 const ProjectPageLayout = () => (
-  <>
+  <PageTransition>
     <Navbar />
     <ProjectDetails />
     <footer>
@@ -74,11 +123,11 @@ const ProjectPageLayout = () => (
         </span>
       </center>
     </footer>
-  </>
+  </PageTransition>
 );
 
 const BlogPageLayout = () => (
-  <>
+  <PageTransition>
     <Navbar />
     <Blog />
     <footer>
@@ -93,11 +142,11 @@ const BlogPageLayout = () => (
         </span>
       </center>
     </footer>
-  </>
+  </PageTransition>
 );
 
 const BlogDetailLayout = () => (
-  <>
+  <PageTransition>
     <Navbar />
     <BlogDetail />
     <footer>
@@ -112,13 +161,38 @@ const BlogDetailLayout = () => (
         </span>
       </center>
     </footer>
-  </>
+  </PageTransition>
+);
+
+const ServicesPageLayout = () => (
+  <PageTransition>
+    <Navbar />
+    <Services />
+    <footer>
+      <center>
+        <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
+        <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
+          © 2026{" "}
+          <a href="/" className="hover:underline">
+            Doni Sugiharto
+          </a>
+          . All Rights Reserved.
+        </span>
+      </center>
+    </footer>
+  </PageTransition>
 );
 
 
 
 function App() {
-  const [showWelcome, setShowWelcome] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(() => {
+    return window.location.pathname === "/";
+  });
+
+  const handleWelcomeComplete = () => {
+    setShowWelcome(false);
+  };
 
   useEffect(() => {
     const fetchSEO = async () => {
@@ -145,14 +219,18 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage showWelcome={showWelcome} setShowWelcome={setShowWelcome} />} />
-        <Route path="/project/:id" element={<ProjectPageLayout />} />
-        <Route path="/blog" element={<BlogPageLayout />} />
-        <Route path="/blog/:id" element={<BlogDetailLayout />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="*" element={<NotFoundPage />} /> {/* Ini route 404 */}
-      </Routes>
+      <PageViewTracker />
+      <AnimatePresence mode="wait">
+        <Routes>
+          <Route path="/" element={<LandingPage showWelcome={showWelcome} setShowWelcome={handleWelcomeComplete} />} />
+          <Route path="/project/:id" element={<ProjectPageLayout />} />
+          <Route path="/blog" element={<BlogPageLayout />} />
+          <Route path="/blog/:id" element={<BlogDetailLayout />} />
+          <Route path="/services" element={<ServicesPageLayout />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </AnimatePresence>
     </BrowserRouter>
   );
 }

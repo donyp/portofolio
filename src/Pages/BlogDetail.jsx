@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
-import { Calendar, Tag, ArrowLeft, Clock, Share2, Facebook, Twitter, Linkedin, Eye, Heart } from "lucide-react";
+import { Calendar, Tag, ArrowLeft, Clock, Share2, Twitter, Instagram, MessageCircle, Eye, Heart, User, MessageSquare, Reply, Send } from "lucide-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
@@ -12,6 +12,12 @@ const BlogDetail = () => {
     const [loading, setLoading] = useState(true);
     const [likeCount, setLikeCount] = useState(0);
     const [isLiked, setIsLiked] = useState(false);
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState("");
+    const [commenterName, setCommenterName] = useState("");
+    const [replyingTo, setReplyingTo] = useState(null);
+    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+    const [showAllComments, setShowAllComments] = useState(false);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -44,8 +50,100 @@ const BlogDetail = () => {
                 await supabase.from('blogs').update({ views: newViews }).eq('id', id);
                 sessionStorage.setItem('viewedBlogs', JSON.stringify([...viewedBlogs, id]));
             }
+
+            // Fetch comments
+            const { data: commentsData, error: commentsError } = await supabase
+                .from("comments")
+                .select("*")
+                .eq("blog_id", id)
+                .order("created_at", { ascending: true });
+
+            if (commentsError) console.error("Error fetching comments:", commentsError);
+            else setComments(commentsData || []);
         }
         setLoading(false);
+    };
+
+    const handleSubmitComment = async (e) => {
+        e.preventDefault();
+        if (!newComment.trim() || !commenterName.trim()) return;
+
+        const isAdmin = sessionStorage.getItem('admin_auth') === 'true';
+        if (!isAdmin && commenterName.trim().toLowerCase() === 'doni') {
+            alert("Nama 'Doni' dilindungi. Silakan gunakan nama lain.");
+            return;
+        }
+
+        setIsSubmittingComment(true);
+        try {
+            const { data, error } = await supabase
+                .from('comments')
+                .insert([{
+                    blog_id: id,
+                    user_name: commenterName,
+                    content: newComment,
+                    parent_id: replyingTo ? replyingTo.id : null
+                }])
+                .select();
+
+            if (error) throw error;
+
+            if (data) {
+                setComments([...comments, data[0]]);
+                setNewComment("");
+                setReplyingTo(null);
+            }
+        } catch (err) {
+            console.error("Error posting comment:", err);
+            alert("Failed to post comment. Please try again.");
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+
+    const renderComments = (parentId = null, depth = 0) => {
+        let threadComments = comments.filter(c => c.parent_id === parentId);
+
+        if (parentId === null && !showAllComments) {
+            threadComments = threadComments.slice(0, 2);
+        }
+
+        if (threadComments.length === 0) return null;
+
+        return (
+            <div className={`space-y-4 ${depth > 0 ? 'ml-4 sm:ml-8 border-l border-white/10 pl-4 mt-4' : ''}`}>
+                {threadComments.map(comment => {
+                    const isCreator = comment.user_name.toLowerCase() === 'doni';
+                    return (
+                        <div key={comment.id} className={`bg-white/5 border ${isCreator ? 'border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.15)]' : 'border-white/10'} rounded-xl p-4 transition-all hover:bg-white/10`}>
+                            <div className="flex items-center justify-between mb-2">
+                                <span className={`font-bold flex items-center gap-2 ${isCreator ? 'text-purple-400' : 'text-indigo-400'}`}>
+                                    <User className="w-4 h-4" /> {comment.user_name}
+                                    {isCreator && (
+                                        <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wider uppercase">
+                                            Creator
+                                        </span>
+                                    )}
+                                </span>
+                                <span className="text-xs text-gray-500">{new Date(comment.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-gray-300 text-sm mb-3 whitespace-pre-wrap">{comment.content}</p>
+                            <button
+                                onClick={() => {
+                                    setReplyingTo(comment);
+                                    document.getElementById("comment-form").scrollIntoView({ behavior: 'smooth' });
+                                }}
+                                className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"
+                            >
+                                <Reply className="w-3 h-3" /> Reply
+                            </button>
+
+                            {renderComments(comment.id, depth + 1)}
+                        </div>
+                    );
+                })}
+            </div>
+        );
     };
 
     const handleLike = async () => {
@@ -63,19 +161,20 @@ const BlogDetail = () => {
 
     const shareOnSocial = (platform) => {
         const url = window.location.href;
-        const text = blog?.title || "Check out this blog post!";
+        const text = `Cek artikel keren dari Doni ini: ${blog?.title}\n\nBaca selengkapnya di: ${url}`;
         let shareUrl = "";
 
         switch (platform) {
-            case "facebook":
-                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            case "whatsapp":
+                shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
                 break;
             case "twitter":
-                shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+                shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
                 break;
-            case "linkedin":
-                shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
-                break;
+            case "instagram":
+                navigator.clipboard.writeText(text);
+                alert("Teks dan link sudah dicopy! IG belum support direct link share via web, silakan paste di story/post IG kamu ya.");
+                return;
             default:
                 break;
         }
@@ -116,6 +215,10 @@ const BlogDetail = () => {
                         {blog.title}
                     </h1>
                     <div className="flex flex-wrap items-center gap-6 text-gray-400 text-sm md:text-base border-y border-white/10 py-6">
+                        <div className="flex items-center gap-2">
+                            <User className="w-5 h-5 text-gray-500" />
+                            Doni
+                        </div>
                         <div className="flex items-center gap-2">
                             <Calendar className="w-5 h-5 text-gray-500" />
                             {new Date(blog.created_at).toLocaleDateString()}
@@ -166,18 +269,88 @@ const BlogDetail = () => {
                     </div>
                     <div className="flex items-center gap-4">
                         {[
-                            { id: "facebook", icon: Facebook, color: "hover:bg-blue-600" },
-                            { id: "twitter", icon: Twitter, color: "hover:bg-sky-500" },
-                            { id: "linkedin", icon: Linkedin, color: "hover:bg-blue-700" },
+                            { id: "whatsapp", icon: MessageCircle, color: "hover:bg-green-600", name: "WhatsApp" },
+                            { id: "twitter", icon: Twitter, color: "hover:bg-sky-500", name: "Twitter" },
                         ].map((item) => (
                             <button
                                 key={item.id}
                                 onClick={() => shareOnSocial(item.id)}
+                                title={`Share to ${item.name}`}
                                 className={`w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center transition-all duration-300 ${item.color} hover:border-transparent hover:scale-110`}
                             >
                                 <item.icon className="w-5 h-5" />
                             </button>
                         ))}
+                    </div>
+                </div>
+
+                {/* Comments Section */}
+                <div className="mt-12 pt-12 border-t border-white/10" id="comment-form" data-aos="fade-up">
+                    <h3 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white">
+                        <MessageSquare className="w-6 h-6 text-purple-400" />
+                        Comments ({comments.length})
+                    </h3>
+
+                    {/* Comment Form */}
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8">
+                        <h4 className="font-semibold text-white mb-4">
+                            {replyingTo ? `Replying to ${replyingTo.user_name}` : "Leave a Comment"}
+                        </h4>
+                        <form onSubmit={handleSubmitComment} className="space-y-4">
+                            <input
+                                type="text"
+                                placeholder="Your Name"
+                                value={commenterName}
+                                onChange={(e) => setCommenterName(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-purple-500 transition-colors"
+                                required
+                            />
+                            <textarea
+                                placeholder="Write your comment..."
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-purple-500 transition-colors h-24 resize-none"
+                                required
+                            ></textarea>
+
+                            <div className="flex items-center gap-3">
+                                <button
+                                    type="submit"
+                                    disabled={isSubmittingComment}
+                                    className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-medium hover:from-purple-500 hover:to-indigo-500 transition-all flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    {isSubmittingComment ? "Posting..." : <><Send className="w-4 h-4" /> Post Comment</>}
+                                </button>
+                                {replyingTo && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setReplyingTo(null)}
+                                        className="text-gray-400 hover:text-white text-sm"
+                                    >
+                                        Cancel Reply
+                                    </button>
+                                )}
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Comments List */}
+                    <div className="space-y-4">
+                        {comments.length > 0 ? (
+                            <>
+                                {renderComments(null, 0)}
+                                {comments.filter(c => c.parent_id === null).length > 2 && !showAllComments && (
+                                    <button
+                                        onClick={() => setShowAllComments(true)}
+                                        className="w-full py-3 mt-4 border border-white/10 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all text-sm font-semibold"
+                                    >
+                                        Show More Comments
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            <p className="text-gray-500 text-center py-8">Be the first to comment!</p>
+                        )}
                     </div>
                 </div>
             </div>

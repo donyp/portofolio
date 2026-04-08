@@ -24,7 +24,17 @@ import {
     Edit2,
     Upload,
     Globe,
-    TrendingUp
+    TrendingUp,
+    MessageSquare,
+    Briefcase,
+    Zap,
+    Clock,
+    Palette,
+    Monitor,
+    Smartphone,
+    ArrowUp,
+    ArrowDown,
+    Reply
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -54,6 +64,22 @@ const Admin = () => {
     const [isEditingProject, setIsEditingProject] = useState(false);
     const [editingProject, setEditingProject] = useState(null);
     const [newProject, setNewProject] = useState({ Title: "", Description: "", Link: "", Img: "", category: "Design", video_url: "", lottie_url: "" });
+    // New feature states
+    const [testimonials, setTestimonials] = useState([]);
+    const [services, setServices] = useState([]);
+    const [experiences, setExperiences] = useState([]);
+    const [activityLogs, setActivityLogs] = useState([]);
+    const [pageViews, setPageViews] = useState([]);
+    const [editingTestimonial, setEditingTestimonial] = useState(null);
+    const [newTestimonial, setNewTestimonial] = useState({ client_name: "", client_role: "", client_photo: "", rating: 5, review_text: "", is_featured: false });
+    const [editingService, setEditingService] = useState(null);
+    const [newService, setNewService] = useState({ title: "", description: "", icon: "Palette", price_text: "", whatsapp_template: "", sort_order: 0, is_active: true });
+    const [editingExperience, setEditingExperience] = useState(null);
+    const [newExperience, setNewExperience] = useState({ year: "", title: "", company: "", description: "", sort_order: 0 });
+    const [allComments, setAllComments] = useState([]);
+    const [adminReplyingTo, setAdminReplyingTo] = useState(null);
+    const [adminReplyContent, setAdminReplyContent] = useState("");
+    const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
     useEffect(() => {
         const checkAuth = () => {
@@ -129,6 +155,31 @@ const Admin = () => {
         }
         setLoading(false);
     };
+
+    const fetchExtendedData = async () => {
+        try {
+            const [testRes, svcRes, expRes, logRes, pvRes, commentsRes] = await Promise.all([
+                supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
+                supabase.from("services").select("*").order("sort_order", { ascending: true }),
+                supabase.from("experiences").select("*").order("sort_order", { ascending: true }),
+                supabase.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(50),
+                supabase.from("page_views").select("*").order("created_at", { ascending: false }).limit(500),
+                supabase.from("comments").select("*, blogs(title)").order("created_at", { ascending: false })
+            ]);
+            if (testRes.data) setTestimonials(testRes.data);
+            if (svcRes.data) setServices(svcRes.data);
+            if (expRes.data) setExperiences(expRes.data);
+            if (logRes.data) setActivityLogs(logRes.data);
+            if (pvRes.data) setPageViews(pvRes.data);
+            if (commentsRes.data) setAllComments(commentsRes.data);
+        } catch (err) {
+            console.error("Extended data fetch:", err);
+        }
+    };
+
+    useEffect(() => {
+        if (isAuthenticated) fetchExtendedData();
+    }, [isAuthenticated]);
 
     const handleFileUpload = async (file, bucket = "portfolio") => {
         try {
@@ -291,6 +342,189 @@ const Admin = () => {
         return num;
     };
 
+    const logActivity = async (action, entity_type, entity_name) => {
+        try {
+            await supabase.from("activity_logs").insert({ action, entity_type, entity_name });
+            fetchExtendedData();
+        } catch (err) { console.error(err); }
+    };
+
+    // Testimonial CRUD
+    const handleSaveTestimonial = async () => {
+        if (!newTestimonial.client_name || !newTestimonial.review_text) return;
+        setLoading(true);
+        const { error } = editingTestimonial
+            ? await supabase.from("testimonials").update(newTestimonial).eq("id", editingTestimonial.id)
+            : await supabase.from("testimonials").insert([newTestimonial]);
+        if (error) Swal.fire("Error", error.message, "error");
+        else {
+            Swal.fire("Success", editingTestimonial ? "Testimonial updated!" : "Testimonial added!", "success");
+            logActivity(editingTestimonial ? "Updated" : "Created", "Testimonial", newTestimonial.client_name);
+            setNewTestimonial({ client_name: "", client_role: "", client_photo: "", rating: 5, review_text: "", is_featured: false });
+            setEditingTestimonial(null);
+            fetchExtendedData();
+        }
+        setLoading(false);
+    };
+
+    const handleDeleteTestimonial = async (id, name) => {
+        const result = await Swal.fire({ title: "Delete testimonial?", icon: "warning", showCancelButton: true, confirmButtonColor: "#d33", background: "#030014", color: "#fff" });
+        if (result.isConfirmed) {
+            await supabase.from("testimonials").delete().eq("id", id);
+            logActivity("Deleted", "Testimonial", name);
+            fetchExtendedData();
+        }
+    };
+
+    // Service CRUD
+    const handleSaveService = async () => {
+        if (!newService.title) return;
+        setLoading(true);
+        const { error } = editingService
+            ? await supabase.from("services").update(newService).eq("id", editingService.id)
+            : await supabase.from("services").insert([newService]);
+        if (error) Swal.fire("Error", error.message, "error");
+        else {
+            Swal.fire("Success", editingService ? "Service updated!" : "Service added!", "success");
+            logActivity(editingService ? "Updated" : "Created", "Service", newService.title);
+            setNewService({ title: "", description: "", icon: "Palette", price_text: "", whatsapp_template: "", sort_order: 0, is_active: true });
+            setEditingService(null);
+            fetchExtendedData();
+        }
+        setLoading(false);
+    };
+
+    const handleDeleteService = async (id, title) => {
+        const result = await Swal.fire({ title: "Delete service?", icon: "warning", showCancelButton: true, confirmButtonColor: "#d33", background: "#030014", color: "#fff" });
+        if (result.isConfirmed) {
+            await supabase.from("services").delete().eq("id", id);
+            logActivity("Deleted", "Service", title);
+            fetchExtendedData();
+        }
+    };
+
+    // Experience CRUD
+    const handleSaveExperience = async () => {
+        if (!newExperience.title || !newExperience.year) return;
+        setLoading(true);
+        const { error } = editingExperience
+            ? await supabase.from("experiences").update(newExperience).eq("id", editingExperience.id)
+            : await supabase.from("experiences").insert([newExperience]);
+        if (error) Swal.fire("Error", error.message, "error");
+        else {
+            Swal.fire("Success", editingExperience ? "Experience updated!" : "Experience added!", "success");
+            logActivity(editingExperience ? "Updated" : "Created", "Experience", newExperience.title);
+            setNewExperience({ year: "", title: "", company: "", description: "", sort_order: 0 });
+            setEditingExperience(null);
+            fetchExtendedData();
+        }
+        setLoading(false);
+    };
+
+    const handleDeleteExperience = async (id, title) => {
+        const result = await Swal.fire({ title: "Delete experience?", icon: "warning", showCancelButton: true, confirmButtonColor: "#d33", background: "#030014", color: "#fff" });
+        if (result.isConfirmed) {
+            await supabase.from("experiences").delete().eq("id", id);
+            logActivity("Deleted", "Experience", title);
+            fetchExtendedData();
+        }
+    };
+
+    // Admin Comment Reply Logic
+    const handleAdminSubmitReply = async () => {
+        if (!adminReplyContent.trim() || !adminReplyingTo) return;
+        setIsSubmittingReply(true);
+
+        try {
+            const { error } = await supabase.from('comments').insert([{
+                blog_id: adminReplyingTo.blog_id,
+                user_name: "Doni", // Admin name
+                content: adminReplyContent,
+                parent_id: adminReplyingTo.id
+            }]);
+
+            if (error) throw error;
+
+            Swal.fire({ title: "Success", text: "Reply posted!", icon: "success", background: "#030014", color: "#fff" });
+            setAdminReplyContent("");
+            setAdminReplyingTo(null);
+            fetchExtendedData(); // refresh comments
+        } catch (err) {
+            Swal.fire("Error", "Failed to post reply.", "error");
+        } finally {
+            setIsSubmittingReply(false);
+        }
+    };
+
+    const renderAdminComments = (blogId, parentId = null, depth = 0) => {
+        const thread = allComments.filter(c => c.blog_id === blogId && c.parent_id === parentId);
+        if (thread.length === 0) return null;
+
+        return (
+            <div className={`space-y-3 ${depth > 0 ? 'ml-6 border-l-2 border-white/10 pl-4 mt-3' : ''}`}>
+                {thread.map(c => (
+                    <div key={c.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col gap-2 relative transition-all hover:bg-white/10">
+                        <div className="flex items-center justify-between">
+                            <span className={`font-bold ${c.user_name.toLowerCase() === 'doni' ? 'text-purple-400' : 'text-indigo-400'}`}>
+                                {c.user_name}
+                                {c.user_name.toLowerCase() === 'doni' && <span className="ml-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-[10px] px-2 py-0.5 rounded-full text-white tracking-wider">CREATOR</span>}
+                            </span>
+                            <span className="text-xs text-gray-500">{new Date(c.created_at).toLocaleString()}</span>
+                        </div>
+                        <p className="text-gray-300 text-sm whitespace-pre-wrap">{c.content}</p>
+
+                        <div className="flex gap-4 mt-2">
+                            <button
+                                onClick={() => setAdminReplyingTo(c)}
+                                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                            >
+                                <Reply className="w-3 h-3 inline mr-1" /> Reply
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    const result = await Swal.fire({ title: "Delete comment?", text: "This will also delete all replies.", icon: "warning", showCancelButton: true, confirmButtonColor: "#d33", background: "#030014", color: "#fff" });
+                                    if (result.isConfirmed) {
+                                        await supabase.from("comments").delete().eq("id", c.id);
+                                        logActivity("Deleted", "Comment", c.user_name);
+                                        fetchExtendedData();
+                                    }
+                                }}
+                                className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                            >
+                                <Trash2 className="w-3 h-3 inline mr-1" /> Delete
+                            </button>
+                        </div>
+
+                        {/* Reply Form */}
+                        {adminReplyingTo?.id === c.id && (
+                            <div className="mt-3 bg-black/40 p-4 rounded-xl border border-white/10 relative">
+                                <p className="text-xs text-gray-400 mb-2">Replying to {c.user_name}</p>
+                                <textarea
+                                    className="w-full bg-white/5 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-indigo-500 border border-white/10 resize-none h-20"
+                                    value={adminReplyContent}
+                                    onChange={e => setAdminReplyContent(e.target.value)}
+                                    placeholder="Write your reply as Doni..."
+                                />
+                                <div className="flex justify-end gap-3 mt-3">
+                                    <button onClick={() => setAdminReplyingTo(null)} className="text-xs text-gray-400 hover:text-white px-3 py-1.5 transition-colors">Cancel</button>
+                                    <button
+                                        disabled={isSubmittingReply}
+                                        onClick={handleAdminSubmitReply}
+                                        className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors font-medium border border-indigo-500/50"
+                                    >
+                                        {isSubmittingReply ? "Posting..." : "Post Reply"}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {renderAdminComments(blogId, c.id, depth + 1)}
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     if (!isAuthenticated) return <div className="min-h-screen bg-[#030014]" />;
 
     return (
@@ -312,6 +546,12 @@ const Admin = () => {
                         { id: "blogs", label: "Blog Posts", icon: FileText },
                         { id: "projects", label: "Projects", icon: FolderKanban },
                         { id: "skills", label: "Skills & More", icon: Code2 },
+                        { id: "comments", label: "Comments", icon: MessageSquare },
+                        { id: "testimonials", label: "Testimonials", icon: MessageSquare },
+                        { id: "services", label: "Services", icon: Palette },
+                        { id: "timeline", label: "Timeline", icon: Briefcase },
+                        { id: "analytics", label: "Analytics", icon: TrendingUp },
+                        { id: "activity", label: "Activity Log", icon: Clock },
                         { id: "settings", label: "Settings", icon: UserCircle },
                     ].map((item) => (
                         <button
@@ -355,6 +595,11 @@ const Admin = () => {
                             { id: "blogs", label: "Blog", icon: FileText },
                             { id: "projects", label: "Projects", icon: FolderKanban },
                             { id: "skills", label: "Skills", icon: Code2 },
+                            { id: "testimonials", label: "Reviews", icon: MessageSquare },
+                            { id: "services", label: "Services", icon: Palette },
+                            { id: "timeline", label: "Timeline", icon: Briefcase },
+                            { id: "analytics", label: "Analytics", icon: TrendingUp },
+                            { id: "activity", label: "Logs", icon: Clock },
                             { id: "settings", label: "Settings", icon: UserCircle },
                         ].map((item) => (
                             <button
@@ -873,6 +1118,223 @@ const Admin = () => {
                                     <Save className="w-4 h-4" /> Save SEO
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Quick Actions in Dashboard */}
+                {activeTab === "stats" && (
+                    <div className="mt-8 bg-white/5 border border-white/10 p-6 rounded-3xl">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Zap className="w-5 h-5 text-yellow-400" /> Quick Actions</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {[
+                                { label: "New Blog", action: () => setActiveTab("blogs"), icon: FileText, color: "text-purple-400" },
+                                { label: "New Project", action: () => setActiveTab("projects"), icon: FolderKanban, color: "text-blue-400" },
+                                { label: "Add Review", action: () => setActiveTab("testimonials"), icon: MessageSquare, color: "text-green-400" },
+                                { label: "Add Service", action: () => setActiveTab("services"), icon: Palette, color: "text-pink-400" },
+                            ].map((item, i) => (
+                                <button key={i} onClick={item.action} className="flex items-center gap-2 p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-sm">
+                                    <item.icon className={`w-4 h-4 ${item.color}`} />
+                                    {item.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Testimonials Tab */}
+                {activeTab === "testimonials" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold">Testimonials</h2>
+                        </div>
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
+                            <h3 className="font-bold">{editingTestimonial ? "Edit Testimonial" : "Add Testimonial"}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Client Name" value={newTestimonial.client_name} onChange={e => setNewTestimonial({ ...newTestimonial, client_name: e.target.value })} />
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Client Role / Company" value={newTestimonial.client_role} onChange={e => setNewTestimonial({ ...newTestimonial, client_role: e.target.value })} />
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Photo URL" value={newTestimonial.client_photo} onChange={e => setNewTestimonial({ ...newTestimonial, client_photo: e.target.value })} />
+                                <select className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500 text-white" value={newTestimonial.rating} onChange={e => setNewTestimonial({ ...newTestimonial, rating: parseInt(e.target.value) })}>
+                                    {[5, 4, 3, 2, 1].map(r => <option key={r} value={r} className="bg-gray-900">{r} Stars</option>)}
+                                </select>
+                            </div>
+                            <textarea className="w-full bg-white/5 border border-white/10 rounded-xl p-3 h-24 outline-none focus:border-indigo-500" placeholder="Review text..." value={newTestimonial.review_text} onChange={e => setNewTestimonial({ ...newTestimonial, review_text: e.target.value })} />
+                            <div className="flex gap-3">
+                                <button onClick={handleSaveTestimonial} className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-6 py-2 rounded-xl hover:bg-indigo-500 hover:text-white transition-all font-bold flex items-center gap-2">
+                                    <Save className="w-4 h-4" /> {editingTestimonial ? "Update" : "Add"}
+                                </button>
+                                {editingTestimonial && <button onClick={() => { setEditingTestimonial(null); setNewTestimonial({ client_name: "", client_role: "", client_photo: "", rating: 5, review_text: "", is_featured: false }); }} className="text-gray-400 hover:text-white px-4 py-2">Cancel</button>}
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {testimonials.map(t => (
+                                <div key={t.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
+                                    <div className="flex-1">
+                                        <p className="font-semibold">{t.client_name} <span className="text-gray-500 text-sm">— {t.client_role}</span></p>
+                                        <p className="text-gray-400 text-sm line-clamp-1">"{t.review_text}"</p>
+                                        <div className="flex items-center gap-1 mt-1">{[...Array(t.rating || 5)].map((_, i) => <Star key={i} className="w-3 h-3 text-yellow-400 fill-yellow-400" />)}</div>
+                                    </div>
+                                    <div className="flex gap-2 ml-4">
+                                        <button onClick={() => { setEditingTestimonial(t); setNewTestimonial(t); }} className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><Edit2 className="w-4 h-4 text-blue-400" /></button>
+                                        <button onClick={() => handleDeleteTestimonial(t.id, t.client_name)} className="p-2 bg-white/5 rounded-lg hover:bg-red-500/20"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                                    </div>
+                                </div>
+                            ))}
+                            {testimonials.length === 0 && <p className="text-gray-500 text-center py-8">No testimonials yet.</p>}
+                        </div>
+                    </div>
+                )}
+
+                {/* Comments Manager Tab */}
+                {activeTab === "comments" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold">Blog Comments</h2>
+                        </div>
+                        <div className="space-y-6">
+                            {allComments.length === 0 && <p className="text-gray-500 text-center py-8">No comments yet.</p>}
+
+                            {[...new Set(allComments.map(c => c.blog_id))].map(blogId => {
+                                const title = allComments.find(c => c.blog_id === blogId)?.blogs?.title || "Unknown Blog";
+                                return (
+                                    <div key={blogId} className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+                                        <h3 className="font-bold text-lg mb-6 text-purple-400 border-b border-white/10 pb-3 flex items-center gap-2">
+                                            <FileText className="w-5 h-5" /> {title}
+                                        </h3>
+                                        <div className="mt-4">
+                                            {renderAdminComments(blogId, null, 0)}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* Services Tab */}
+                {activeTab === "services" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <h2 className="text-2xl font-bold">Services Manager</h2>
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
+                            <h3 className="font-bold">{editingService ? "Edit Service" : "Add Service"}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Service Title" value={newService.title} onChange={e => setNewService({ ...newService, title: e.target.value })} />
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Price (e.g. Rp 500.000)" value={newService.price_text} onChange={e => setNewService({ ...newService, price_text: e.target.value })} />
+                                <select className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none text-white" value={newService.icon} onChange={e => setNewService({ ...newService, icon: e.target.value })}>
+                                    {["Palette", "PenTool", "Layout", "Film", "Camera", "Monitor", "Sparkles"].map(ic => <option key={ic} value={ic} className="bg-gray-900">{ic}</option>)}
+                                </select>
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" type="number" placeholder="Sort Order" value={newService.sort_order} onChange={e => setNewService({ ...newService, sort_order: parseInt(e.target.value) || 0 })} />
+                            </div>
+                            <textarea className="w-full bg-white/5 border border-white/10 rounded-xl p-3 h-20 outline-none focus:border-indigo-500" placeholder="Description" value={newService.description} onChange={e => setNewService({ ...newService, description: e.target.value })} />
+                            <textarea className="w-full bg-white/5 border border-white/10 rounded-xl p-3 h-16 outline-none focus:border-indigo-500" placeholder="WhatsApp template message" value={newService.whatsapp_template} onChange={e => setNewService({ ...newService, whatsapp_template: e.target.value })} />
+                            <div className="flex gap-3">
+                                <button onClick={handleSaveService} className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-6 py-2 rounded-xl hover:bg-indigo-500 hover:text-white transition-all font-bold flex items-center gap-2">
+                                    <Save className="w-4 h-4" /> {editingService ? "Update" : "Add"}
+                                </button>
+                                {editingService && <button onClick={() => { setEditingService(null); setNewService({ title: "", description: "", icon: "Palette", price_text: "", whatsapp_template: "", sort_order: 0, is_active: true }); }} className="text-gray-400 hover:text-white px-4 py-2">Cancel</button>}
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {services.map(s => (
+                                <div key={s.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
+                                    <div><p className="font-semibold">{s.title}</p><p className="text-sm text-gray-400">{s.price_text || "No price set"} • Order #{s.sort_order}</p></div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => { setEditingService(s); setNewService(s); }} className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><Edit2 className="w-4 h-4 text-blue-400" /></button>
+                                        <button onClick={() => handleDeleteService(s.id, s.title)} className="p-2 bg-white/5 rounded-lg hover:bg-red-500/20"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                                    </div>
+                                </div>
+                            ))}
+                            {services.length === 0 && <p className="text-gray-500 text-center py-8">No services yet.</p>}
+                        </div>
+                    </div>
+                )}
+
+                {/* Timeline Tab */}
+                {activeTab === "timeline" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <h2 className="text-2xl font-bold">Timeline / Experience</h2>
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
+                            <h3 className="font-bold">{editingExperience ? "Edit Experience" : "Add Experience"}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Year (e.g. 2024)" value={newExperience.year} onChange={e => setNewExperience({ ...newExperience, year: e.target.value })} />
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Title / Position" value={newExperience.title} onChange={e => setNewExperience({ ...newExperience, title: e.target.value })} />
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Company / Organization" value={newExperience.company} onChange={e => setNewExperience({ ...newExperience, company: e.target.value })} />
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" type="number" placeholder="Sort Order" value={newExperience.sort_order} onChange={e => setNewExperience({ ...newExperience, sort_order: parseInt(e.target.value) || 0 })} />
+                            </div>
+                            <textarea className="w-full bg-white/5 border border-white/10 rounded-xl p-3 h-20 outline-none focus:border-indigo-500" placeholder="Description" value={newExperience.description} onChange={e => setNewExperience({ ...newExperience, description: e.target.value })} />
+                            <div className="flex gap-3">
+                                <button onClick={handleSaveExperience} className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-6 py-2 rounded-xl hover:bg-indigo-500 hover:text-white transition-all font-bold flex items-center gap-2">
+                                    <Save className="w-4 h-4" /> {editingExperience ? "Update" : "Add"}
+                                </button>
+                                {editingExperience && <button onClick={() => { setEditingExperience(null); setNewExperience({ year: "", title: "", company: "", description: "", sort_order: 0 }); }} className="text-gray-400 hover:text-white px-4 py-2">Cancel</button>}
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {experiences.map(ex => (
+                                <div key={ex.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
+                                    <div><p className="font-semibold">{ex.year} — {ex.title}</p><p className="text-sm text-gray-400">{ex.company}</p></div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => { setEditingExperience(ex); setNewExperience(ex); }} className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><Edit2 className="w-4 h-4 text-blue-400" /></button>
+                                        <button onClick={() => handleDeleteExperience(ex.id, ex.title)} className="p-2 bg-white/5 rounded-lg hover:bg-red-500/20"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                                    </div>
+                                </div>
+                            ))}
+                            {experiences.length === 0 && <p className="text-gray-500 text-center py-8">No experiences yet.</p>}
+                        </div>
+                    </div>
+                )}
+
+                {/* Analytics Tab */}
+                {activeTab === "analytics" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <h2 className="text-2xl font-bold">Visitor Analytics</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+                                <div className="flex items-center gap-3 mb-2"><Eye className="w-5 h-5 text-blue-400" /><span className="text-gray-400 text-sm">Total Page Views</span></div>
+                                <p className="text-3xl font-bold">{pageViews.length}</p>
+                            </div>
+                            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+                                <div className="flex items-center gap-3 mb-2"><Monitor className="w-5 h-5 text-green-400" /><span className="text-gray-400 text-sm">Desktop</span></div>
+                                <p className="text-3xl font-bold">{pageViews.filter(pv => pv.device_type === "desktop").length}</p>
+                            </div>
+                            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+                                <div className="flex items-center gap-3 mb-2"><Smartphone className="w-5 h-5 text-orange-400" /><span className="text-gray-400 text-sm">Mobile</span></div>
+                                <p className="text-3xl font-bold">{pageViews.filter(pv => pv.device_type === "mobile").length}</p>
+                            </div>
+                        </div>
+                        {/* Top Pages */}
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+                            <h3 className="font-bold mb-4">Top Pages</h3>
+                            <div className="space-y-2">
+                                {Object.entries(pageViews.reduce((acc, pv) => { acc[pv.page_path] = (acc[pv.page_path] || 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([path, count], i) => (
+                                    <div key={i} className="flex items-center justify-between py-2 border-b border-white/5">
+                                        <span className="text-gray-300 text-sm">{path}</span>
+                                        <span className="text-indigo-400 font-bold text-sm">{count} views</span>
+                                    </div>
+                                ))}
+                                {pageViews.length === 0 && <p className="text-gray-500 text-center py-4">No page views recorded yet.</p>}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Activity Log Tab */}
+                {activeTab === "activity" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <h2 className="text-2xl font-bold">Activity Log</h2>
+                        <div className="space-y-2">
+                            {activityLogs.map(log => (
+                                <div key={log.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center gap-4">
+                                    <div className={`p-2 rounded-lg ${log.action === 'Deleted' ? 'bg-red-500/10 text-red-400' : log.action === 'Created' ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                                        {log.action === 'Deleted' ? <Trash2 className="w-4 h-4" /> : log.action === 'Created' ? <Plus className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm"><span className="font-semibold">{log.action}</span> {log.entity_type}: <span className="text-indigo-400">{log.entity_name}</span></p>
+                                        <p className="text-xs text-gray-500">{new Date(log.created_at).toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            ))}
+                            {activityLogs.length === 0 && <p className="text-gray-500 text-center py-8">No activity recorded yet.</p>}
                         </div>
                     </div>
                 )}
