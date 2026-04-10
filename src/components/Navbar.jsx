@@ -105,7 +105,7 @@ const Navbar = () => {
 
     return (
         <nav
-            className={`fixed w-full top-0 z-50 transition-all duration-500 ${isOpen
+            className={`fixed w-full top-0 z-[100] transition-all duration-500 ${isOpen
                 ? "bg-[#030014]"
                 : scrolled
                     ? "bg-[#030014]/50 backdrop-blur-xl"
@@ -189,7 +189,7 @@ const Navbar = () => {
                         <button
                             onClick={() => setIsOpen(!isOpen)}
                             aria-label="Toggle Menu"
-                            className={`relative p-2 text-[#e2d3fd] hover:text-white transition-transform duration-300 ease-in-out transform ${isOpen ? "rotate-90 scale-125" : "rotate-0 scale-100"
+                            className={`relative p-2 text-white hover:text-white transition-transform duration-300 ease-in-out transform ${isOpen ? "rotate-90 scale-125" : "rotate-0 scale-100"
                                 }`}
                         >
                             {isOpen ? (

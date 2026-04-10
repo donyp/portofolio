@@ -118,12 +118,27 @@ const BlogDetail = () => {
                         <div key={comment.id} className={`bg-white/5 border ${isCreator ? 'border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.15)]' : 'border-white/10'} rounded-xl p-4 transition-all hover:bg-white/10`}>
                             <div className="flex items-center justify-between mb-2">
                                 <span className={`font-bold flex items-center gap-2 ${isCreator ? 'text-purple-400' : 'text-indigo-400'}`}>
-                                    <User className="w-4 h-4" /> {comment.user_name}
-                                    {isCreator && (
-                                        <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wider uppercase">
-                                            Creator
-                                        </span>
+                                    {isCreator ? (
+                                        <div className="w-8 h-8 rounded-full border-2 border-purple-500/50 overflow-hidden shrink-0">
+                                            <img
+                                                src="/Photo.jpg"
+                                                alt="Creator"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+                                            <User className="w-4 h-4" />
+                                        </div>
                                     )}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-sm md:text-base">{comment.user_name}</span>
+                                        {isCreator && (
+                                            <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[9px] md:text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wider uppercase">
+                                                Creator
+                                            </span>
+                                        )}
+                                    </div>
                                 </span>
                                 <span className="text-xs text-gray-500">{new Date(comment.created_at).toLocaleDateString()}</span>
                             </div>

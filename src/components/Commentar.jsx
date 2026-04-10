@@ -13,7 +13,9 @@ const Comment = memo(({ comment, formatDate, index, isPinned = false, onReply, i
         <div
             className={`px-4 pt-4 pb-2 rounded-xl border transition-all group hover:shadow-lg hover:-translate-y-0.5 ${isPinned
                 ? 'bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border-indigo-500/30 hover:bg-gradient-to-r hover:from-indigo-500/15 hover:to-purple-500/15'
-                : 'bg-white/5 border-white/10 hover:bg-white/10'
+                : comment.user_name.toLowerCase() === 'doni'
+                    ? 'bg-white/5 border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.15)] hover:bg-white/10'
+                    : 'bg-white/5 border-white/10 hover:bg-white/10'
                 } ${isReply ? 'ml-8 sm:ml-12 mt-2' : ''}`}
         >
             {isPinned && (
@@ -27,7 +29,7 @@ const Comment = memo(({ comment, formatDate, index, isPinned = false, onReply, i
                     <img
                         src={profileSrc}
                         alt={`${comment.user_name}'s profile`}
-                        className={`w-10 h-10 rounded-full object-cover border-2 flex-shrink-0  ${isPinned ? 'border-indigo-500/50' : 'border-indigo-500/30'
+                        className={`w-10 h-10 rounded-full object-cover border-2 flex-shrink-0  ${isPinned || comment.user_name.toLowerCase() === 'doni' ? 'border-purple-500/50' : 'border-indigo-500/30'
                             }`}
                         loading="lazy"
                     />
@@ -44,13 +46,13 @@ const Comment = memo(({ comment, formatDate, index, isPinned = false, onReply, i
                                 }`}>
                                 {comment.user_name}
                             </h4>
-                            {(isPinned || comment.user_name === 'Doni') && (
-                                <span className="px-2 py-0.5 text-[10px] bg-indigo-500/20 text-indigo-300 rounded-full border border-indigo-500/30">
+                            {(isPinned || comment.user_name.toLowerCase() === 'doni') && (
+                                <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wider uppercase">
                                     Creator
                                 </span>
                             )}
                             {isReply && replyToName && (
-                                <span className="text-[10px] text-gray-500 italic">
+                                <span className="text-[10px] text-gray-400 italic">
                                     replied to <span className="text-indigo-400 font-medium">@{replyToName}</span>
                                 </span>
                             )}
@@ -83,9 +85,12 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error, placeholder = "Write 
     const [userName, setUserName] = useState(initialName);
     const textareaRef = useRef(null);
 
+    const isAdmin = sessionStorage.getItem('admin_auth') === 'true';
+
     useEffect(() => {
-        if (initialName) setUserName(initialName);
-    }, [initialName]);
+        if (isAdmin) setUserName("Doni");
+        else if (initialName) setUserName(initialName);
+    }, [initialName, isAdmin]);
 
     const handleTextareaChange = useCallback((e) => {
         setNewComment(e.target.value);
@@ -99,15 +104,20 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error, placeholder = "Write 
         e.preventDefault();
         if (!newComment.trim() || !userName.trim()) return;
 
+        if (!isAdmin && userName.toLowerCase().trim() === 'doni') {
+            alert("Nama 'Doni' dilindungi. Silakan gunakan nama lain.");
+            return;
+        }
+
         onSubmit({ newComment, userName });
         setNewComment('');
-        if (showNameInput) setUserName('');
+        if (showNameInput && !isAdmin) setUserName('');
         if (textareaRef.current) textareaRef.current.style.height = 'auto';
-    }, [newComment, userName, onSubmit, showNameInput]);
+    }, [newComment, userName, onSubmit, showNameInput, isAdmin]);
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            {showNameInput && (
+            {showNameInput && !isAdmin && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <input
@@ -120,6 +130,17 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error, placeholder = "Write 
                             required
                         />
                     </div>
+                </div>
+            )}
+
+            {isAdmin && (
+                <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-full border-2 border-purple-500/50 overflow-hidden">
+                        <img src="/Photo.jpg" alt="Admin" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="text-sm font-bold text-purple-400 flex items-center gap-2">
+                        Doni <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full uppercase">Creator Mode</span>
+                    </span>
                 </div>
             )}
 
@@ -177,7 +198,17 @@ const Komentar = () => {
     const [replyingTo, setReplyingTo] = useState(null);
     const [showAll, setShowAll] = useState(false);
 
+    useEffect(() => {
+        const isAdmin = sessionStorage.getItem('admin_auth') === 'true';
+        if (isAdmin) setIsCreatorMode(true);
+    }, []);
+
     const handleLogoClick = () => {
+        const isAdmin = sessionStorage.getItem('admin_auth') === 'true';
+        if (isAdmin) {
+            alert("Admin session active. Posting as Doni.");
+            return;
+        }
         const password = prompt("Enter Creator Access Code:");
         if (password === 'doni123') {
             setIsCreatorMode(true);

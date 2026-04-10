@@ -77,6 +77,7 @@ const Admin = () => {
     const [editingExperience, setEditingExperience] = useState(null);
     const [newExperience, setNewExperience] = useState({ year: "", title: "", company: "", description: "", sort_order: 0 });
     const [allComments, setAllComments] = useState([]);
+    const [allGeneralComments, setAllGeneralComments] = useState([]);
     const [adminReplyingTo, setAdminReplyingTo] = useState(null);
     const [adminReplyContent, setAdminReplyContent] = useState("");
     const [isSubmittingReply, setIsSubmittingReply] = useState(false);
@@ -430,97 +431,177 @@ const Admin = () => {
         }
     };
 
-    // Admin Comment Reply Logic
-    const handleAdminSubmitReply = async () => {
-        if (!adminReplyContent.trim() || !adminReplyingTo) return;
-        setIsSubmittingReply(true);
-
-        try {
-            const { error } = await supabase.from('comments').insert([{
-                blog_id: adminReplyingTo.blog_id,
-                user_name: "Doni", // Admin name
-                content: adminReplyContent,
-                parent_id: adminReplyingTo.id
-            }]);
-
-            if (error) throw error;
-
-            Swal.fire({ title: "Success", text: "Reply posted!", icon: "success", background: "#030014", color: "#fff" });
-            setAdminReplyContent("");
-            setAdminReplyingTo(null);
-            fetchExtendedData(); // refresh comments
-        } catch (err) {
-            Swal.fire("Error", "Failed to post reply.", "error");
-        } finally {
-            setIsSubmittingReply(false);
-        }
-    };
-
     const renderAdminComments = (blogId, parentId = null, depth = 0) => {
         const thread = allComments.filter(c => c.blog_id === blogId && c.parent_id === parentId);
         if (thread.length === 0) return null;
 
         return (
             <div className={`space-y-3 ${depth > 0 ? 'ml-6 border-l-2 border-white/10 pl-4 mt-3' : ''}`}>
-                {thread.map(c => (
-                    <div key={c.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col gap-2 relative transition-all hover:bg-white/10">
-                        <div className="flex items-center justify-between">
-                            <span className={`font-bold ${c.user_name.toLowerCase() === 'doni' ? 'text-purple-400' : 'text-indigo-400'}`}>
-                                {c.user_name}
-                                {c.user_name.toLowerCase() === 'doni' && <span className="ml-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-[10px] px-2 py-0.5 rounded-full text-white tracking-wider">CREATOR</span>}
-                            </span>
-                            <span className="text-xs text-gray-500">{new Date(c.created_at).toLocaleString()}</span>
-                        </div>
-                        <p className="text-gray-300 text-sm whitespace-pre-wrap">{c.content}</p>
-
-                        <div className="flex gap-4 mt-2">
-                            <button
-                                onClick={() => setAdminReplyingTo(c)}
-                                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                            >
-                                <Reply className="w-3 h-3 inline mr-1" /> Reply
-                            </button>
-                            <button
-                                onClick={async () => {
-                                    const result = await Swal.fire({ title: "Delete comment?", text: "This will also delete all replies.", icon: "warning", showCancelButton: true, confirmButtonColor: "#d33", background: "#030014", color: "#fff" });
-                                    if (result.isConfirmed) {
-                                        await supabase.from("comments").delete().eq("id", c.id);
-                                        logActivity("Deleted", "Comment", c.user_name);
-                                        fetchExtendedData();
-                                    }
-                                }}
-                                className="text-xs text-red-400 hover:text-red-300 transition-colors"
-                            >
-                                <Trash2 className="w-3 h-3 inline mr-1" /> Delete
-                            </button>
-                        </div>
-
-                        {/* Reply Form */}
-                        {adminReplyingTo?.id === c.id && (
-                            <div className="mt-3 bg-black/40 p-4 rounded-xl border border-white/10 relative">
-                                <p className="text-xs text-gray-400 mb-2">Replying to {c.user_name}</p>
-                                <textarea
-                                    className="w-full bg-white/5 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-indigo-500 border border-white/10 resize-none h-20"
-                                    value={adminReplyContent}
-                                    onChange={e => setAdminReplyContent(e.target.value)}
-                                    placeholder="Write your reply as Doni..."
-                                />
-                                <div className="flex justify-end gap-3 mt-3">
-                                    <button onClick={() => setAdminReplyingTo(null)} className="text-xs text-gray-400 hover:text-white px-3 py-1.5 transition-colors">Cancel</button>
-                                    <button
-                                        disabled={isSubmittingReply}
-                                        onClick={handleAdminSubmitReply}
-                                        className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors font-medium border border-indigo-500/50"
-                                    >
-                                        {isSubmittingReply ? "Posting..." : "Post Reply"}
-                                    </button>
+                {thread.map(c => {
+                    const isCreator = c.user_name.toLowerCase().trim() === 'doni';
+                    return (
+                        <div key={c.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col gap-2 relative transition-all hover:bg-white/10">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    {isCreator ? (
+                                        <img src="/Photo.jpg" alt="Creator" className="w-6 h-6 rounded-full object-cover border border-purple-500/50" />
+                                    ) : (
+                                        <div className="w-6 h-6 bg-indigo-500/20 rounded-full flex items-center justify-center border border-indigo-500/30">
+                                            <span className="text-indigo-400 text-[10px] uppercase font-bold">{c.user_name[0]}</span>
+                                        </div>
+                                    )}
+                                    <span className={`font-bold text-sm ${isCreator ? 'text-purple-400' : 'text-indigo-400'}`}>
+                                        {c.user_name}
+                                        {isCreator && <span className="ml-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-[8px] px-1.5 py-0.5 rounded-full text-white tracking-wider">CREATOR</span>}
+                                    </span>
                                 </div>
+                                <span className="text-xs text-gray-500">{new Date(c.created_at).toLocaleString()}</span>
                             </div>
-                        )}
+                            <p className="text-gray-300 text-sm whitespace-pre-wrap">{c.content}</p>
 
-                        {renderAdminComments(blogId, c.id, depth + 1)}
-                    </div>
-                ))}
+                            <div className="flex gap-4 mt-2">
+                                <button
+                                    onClick={() => setAdminReplyingTo(c)}
+                                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                >
+                                    <Reply className="w-3 h-3 inline mr-1" /> Reply
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        const result = await Swal.fire({ title: "Delete comment?", text: "This will also delete all replies.", icon: "warning", showCancelButton: true, confirmButtonColor: "#d33", background: "#030014", color: "#fff" });
+                                        if (result.isConfirmed) {
+                                            await supabase.from("comments").delete().eq("id", c.id);
+                                            logActivity("Deleted", "Comment", c.user_name);
+                                            fetchExtendedData();
+                                        }
+                                    }}
+                                    className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                                >
+                                    <Trash2 className="w-3 h-3 inline mr-1" /> Delete
+                                </button>
+                            </div>
+
+                            {adminReplyingTo?.id === c.id && !adminReplyingTo?.isGeneral && (
+                                <div className="mt-3 bg-black/40 p-4 rounded-xl border border-white/10 relative">
+                                    <p className="text-xs text-gray-400 mb-2">Replying to {c.user_name}</p>
+                                    <textarea
+                                        className="w-full bg-white/5 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-indigo-500 border border-white/10 resize-none h-20"
+                                        value={adminReplyContent}
+                                        onChange={e => setAdminReplyContent(e.target.value)}
+                                        placeholder="Write your reply as Doni..."
+                                    />
+                                    <div className="flex justify-end gap-3 mt-3">
+                                        <button onClick={() => setAdminReplyingTo(null)} className="text-xs text-gray-400 hover:text-white px-3 py-1.5 transition-colors">Cancel</button>
+                                        <button
+                                            disabled={isSubmittingReply}
+                                            onClick={handleAdminSubmitReply}
+                                            className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors font-medium border border-indigo-500/50"
+                                        >
+                                            {isSubmittingReply ? "Posting..." : "Post Reply"}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {renderAdminComments(blogId, c.id, depth + 1)}
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
+    const renderGeneralAdminComments = (parentId = null, depth = 0) => {
+        const thread = allGeneralComments.filter(c => c.parent_id === parentId);
+        if (thread.length === 0) return null;
+
+        return (
+            <div className={`space-y-3 ${depth > 0 ? 'ml-6 border-l-2 border-white/10 pl-4 mt-3' : ''}`}>
+                {thread.map(c => {
+                    const isCreator = c.user_name.toLowerCase().trim() === 'doni';
+                    return (
+                        <div key={c.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col gap-2 relative transition-all hover:bg-white/10">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    {isCreator ? (
+                                        <img src="/Photo.jpg" alt="Creator" className="w-6 h-6 rounded-full object-cover border border-purple-500/50" />
+                                    ) : (
+                                        <div className="w-6 h-6 bg-indigo-500/20 rounded-full flex items-center justify-center border border-indigo-500/30">
+                                            <span className="text-indigo-400 text-[10px] uppercase font-bold">{c.user_name[0]}</span>
+                                        </div>
+                                    )}
+                                    <span className={`font-bold text-sm ${isCreator ? 'text-purple-400' : 'text-indigo-400'}`}>
+                                        {c.user_name}
+                                        {isCreator && <span className="ml-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-[8px] px-1.5 py-0.5 rounded-full text-white tracking-wider">CREATOR</span>}
+                                    </span>
+                                </div>
+                                <span className="text-xs text-gray-500">{new Date(c.created_at).toLocaleString()}</span>
+                            </div>
+                            <p className="text-gray-300 text-sm whitespace-pre-wrap">{c.content}</p>
+
+                            <div className="flex gap-4 mt-2">
+                                <button
+                                    onClick={() => setAdminReplyingTo({ ...c, isGeneral: true })}
+                                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                >
+                                    <Reply className="w-3 h-3 inline mr-1" /> Reply
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        const result = await Swal.fire({ title: "Delete general comment?", text: "This will also delete all replies.", icon: "warning", showCancelButton: true, confirmButtonColor: "#d33", background: "#030014", color: "#fff" });
+                                        if (result.isConfirmed) {
+                                            await supabase.from("portfolio_comments").delete().eq("id", c.id);
+                                            logActivity("Deleted", "Gen Comment", c.user_name);
+                                            fetchExtendedData();
+                                        }
+                                    }}
+                                    className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                                >
+                                    <Trash2 className="w-3 h-3 inline mr-1" /> Delete
+                                </button>
+                            </div>
+
+                            {adminReplyingTo?.id === c.id && adminReplyingTo?.isGeneral && (
+                                <div className="mt-3 bg-black/40 p-4 rounded-xl border border-white/10 relative">
+                                    <p className="text-xs text-gray-400 mb-2">Replying to {c.user_name} (General)</p>
+                                    <textarea
+                                        className="w-full bg-white/5 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-indigo-500 border border-white/10 resize-none h-20"
+                                        value={adminReplyContent}
+                                        onChange={e => setAdminReplyContent(e.target.value)}
+                                        placeholder="Write your general reply as Doni..."
+                                    />
+                                    <div className="flex justify-end gap-3 mt-3">
+                                        <button onClick={() => setAdminReplyingTo(null)} className="text-xs text-gray-400 hover:text-white px-3 py-1.5 transition-colors">Cancel</button>
+                                        <button
+                                            disabled={isSubmittingReply}
+                                            onClick={async () => {
+                                                if (!adminReplyContent.trim()) return;
+                                                setIsSubmittingReply(true);
+                                                try {
+                                                    await supabase.from('portfolio_comments').insert([{
+                                                        user_name: "Doni",
+                                                        content: adminReplyContent,
+                                                        parent_id: c.id
+                                                    }]);
+                                                    Swal.fire({ title: "Success", text: "Reply posted!", icon: "success", background: "#030014", color: "#fff" });
+                                                    setAdminReplyContent("");
+                                                    setAdminReplyingTo(null);
+                                                    fetchExtendedData();
+                                                } catch (err) { Swal.fire("Error", "Failed to post reply.", "error"); }
+                                                finally { setIsSubmittingReply(false); }
+                                            }}
+                                            className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors font-medium border border-indigo-500/50"
+                                        >
+                                            {isSubmittingReply ? "Posting..." : "Post Reply"}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {renderGeneralAdminComments(c.id, depth + 1)}
+                        </div>
+                    );
+                })}
             </div>
         );
     };
@@ -546,8 +627,9 @@ const Admin = () => {
                         { id: "blogs", label: "Blog Posts", icon: FileText },
                         { id: "projects", label: "Projects", icon: FolderKanban },
                         { id: "skills", label: "Skills & More", icon: Code2 },
-                        { id: "comments", label: "Comments", icon: MessageSquare },
-                        { id: "testimonials", label: "Testimonials", icon: MessageSquare },
+                        { id: "comments", label: "Blog Comments", icon: MessageSquare },
+                        { id: "gen_comments", label: "General Comments", icon: MessageSquare },
+                        { id: "testimonials", label: "Testimonials", icon: Heart },
                         { id: "services", label: "Services", icon: Palette },
                         { id: "timeline", label: "Timeline", icon: Briefcase },
                         { id: "analytics", label: "Analytics", icon: TrendingUp },
@@ -595,7 +677,9 @@ const Admin = () => {
                             { id: "blogs", label: "Blog", icon: FileText },
                             { id: "projects", label: "Projects", icon: FolderKanban },
                             { id: "skills", label: "Skills", icon: Code2 },
-                            { id: "testimonials", label: "Reviews", icon: MessageSquare },
+                            { id: "comments", label: "Blog Comm", icon: MessageSquare },
+                            { id: "gen_comments", label: "Gen Comm", icon: MessageSquare },
+                            { id: "testimonials", label: "Reviews", icon: Heart },
                             { id: "services", label: "Services", icon: Palette },
                             { id: "timeline", label: "Timeline", icon: Briefcase },
                             { id: "analytics", label: "Analytics", icon: TrendingUp },
@@ -1318,23 +1402,219 @@ const Admin = () => {
                     </div>
                 )}
 
-                {/* Activity Log Tab */}
-                {activeTab === "activity" && (
+                {/* General Comments Tab */}
+                {activeTab === "gen_comments" && (
                     <div className="space-y-8 animate-fadeIn">
-                        <h2 className="text-2xl font-bold">Activity Log</h2>
-                        <div className="space-y-2">
-                            {activityLogs.map(log => (
-                                <div key={log.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center gap-4">
-                                    <div className={`p-2 rounded-lg ${log.action === 'Deleted' ? 'bg-red-500/10 text-red-400' : log.action === 'Created' ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
-                                        {log.action === 'Deleted' ? <Trash2 className="w-4 h-4" /> : log.action === 'Created' ? <Plus className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <h2 className="text-2xl font-bold flex items-center gap-3">
+                                <MessageSquare className="w-8 h-8 text-indigo-400" />
+                                Home Page Comments
+                            </h2>
+                        </div>
+
+                        <div className="space-y-6">
+                            {allGeneralComments.filter(c => !c.parent_id).map(comment => (
+                                <div key={comment.id} className="bg-white/5 border border-white/10 p-6 rounded-3xl space-y-4">
+                                    <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                                        <div className="flex items-center gap-3">
+                                            {comment.user_name.toLowerCase().trim() === 'doni' ? (
+                                                <img src="/Photo.jpg" alt="Creator" className="w-10 h-10 rounded-full object-cover border-2 border-purple-500/50" />
+                                            ) : (
+                                                <div className="p-2 bg-indigo-500/20 rounded-xl">
+                                                    <UserCircle className="w-5 h-5 text-indigo-400" />
+                                                </div>
+                                            )}
+                                            <div>
+                                                <p className="font-bold text-white flex items-center gap-2 text-sm md:text-base">
+                                                    {comment.user_name}
+                                                    {comment.user_name.toLowerCase().trim() === 'doni' && <span className="text-[10px] bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30 font-bold tracking-widest uppercase">CREATOR</span>}
+                                                </p>
+                                                <p className="text-xs text-gray-500">{new Date(comment.created_at).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setAdminReplyingTo({ ...comment, isGeneral: true })}
+                                                className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-lg shadow-indigo-500/20"
+                                                title="Reply"
+                                            >
+                                                <Reply className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={async () => {
+                                                    const result = await Swal.fire({ title: "Delete comment?", text: "This will also delete all replies.", icon: "warning", background: "#030014", color: "#fff", showCancelButton: true });
+                                                    if (result.isConfirmed) {
+                                                        await supabase.from("portfolio_comments").delete().eq("id", comment.id);
+                                                        fetchExtendedData();
+                                                    }
+                                                }}
+                                                className="p-2 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/20"
+                                                title="Delete"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm"><span className="font-semibold">{log.action}</span> {log.entity_type}: <span className="text-indigo-400">{log.entity_name}</span></p>
-                                        <p className="text-xs text-gray-500">{new Date(log.created_at).toLocaleString()}</p>
-                                    </div>
+                                    <p className="text-gray-300 leading-relaxed bg-black/20 p-4 rounded-2xl italic">"{comment.content}"</p>
+
+                                    {/* Threaded Replies */}
+                                    {renderGeneralAdminComments(comment.id)}
+
+                                    {/* Main Reply Input */}
+                                    {adminReplyingTo?.id === comment.id && adminReplyingTo?.isGeneral && (
+                                        <div className="mt-4 bg-indigo-500/5 border border-indigo-500/20 p-6 rounded-2xl animate-fadeIn">
+                                            <p className="text-xs font-semibold text-indigo-400 mb-2 tracking-wider">REPLYING AS DONI</p>
+                                            <textarea
+                                                className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-white focus:border-indigo-500 outline-none resize-none h-28 transition-all"
+                                                placeholder="Write your answer..."
+                                                value={adminReplyContent}
+                                                onChange={e => setAdminReplyContent(e.target.value)}
+                                            />
+                                            <div className="flex justify-end gap-3 mt-4">
+                                                <button onClick={() => setAdminReplyingTo(null)} className="px-6 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
+                                                <button
+                                                    disabled={isSubmittingReply}
+                                                    onClick={async () => {
+                                                        if (!adminReplyContent.trim()) return;
+                                                        setIsSubmittingReply(true);
+                                                        try {
+                                                            await supabase.from('portfolio_comments').insert([{
+                                                                user_name: "Doni",
+                                                                content: adminReplyContent,
+                                                                parent_id: comment.id
+                                                            }]);
+                                                            Swal.fire({ title: "Success", text: "Reply posted!", icon: "success", background: "#030014", color: "#fff" });
+                                                            setAdminReplyContent("");
+                                                            setAdminReplyingTo(null);
+                                                            fetchExtendedData();
+                                                        } catch (err) { Swal.fire("Error", "Failed to post reply.", "error"); }
+                                                        finally { setIsSubmittingReply(false); }
+                                                    }}
+                                                    className="bg-indigo-500 hover:bg-indigo-600 px-8 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-500/25"
+                                                >
+                                                    {isSubmittingReply ? "Posting..." : "Send Reply"}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
-                            {activityLogs.length === 0 && <p className="text-gray-500 text-center py-8">No activity recorded yet.</p>}
+                            {allGeneralComments.length === 0 && (
+                                <div className="text-center py-20 bg-white/5 border border-white/10 rounded-3xl border-dashed">
+                                    <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-4 opacity-20" />
+                                    <p className="text-gray-500 font-medium">No general comments found.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Blog Comments Tab */}
+                {activeTab === "comments" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <h2 className="text-2xl font-bold flex items-center gap-3">
+                                <FileText className="w-8 h-8 text-purple-400" />
+                                Blog Comments Moderation
+                            </h2>
+                        </div>
+
+                        <div className="space-y-8">
+                            {blogs.map(blog => {
+                                const blogComments = allComments.filter(c => c.blog_id === blog.id && !c.parent_id);
+                                if (blogComments.length === 0) return null;
+
+                                return (
+                                    <div key={blog.id} className="bg-white/5 border border-white/10 p-6 rounded-3xl space-y-6">
+                                        <div className="flex items-center gap-3 pb-4 border-b border-white/5">
+                                            <div className="p-2 bg-purple-500/20 rounded-xl">
+                                                <FileText className="w-5 h-5 text-purple-400" />
+                                            </div>
+                                            <h3 className="font-bold text-lg text-white truncate max-w-md">{blog.title}</h3>
+                                        </div>
+
+                                        <div className="space-y-6 pl-2 md:pl-6 border-l-2 border-white/5">
+                                            {blogComments.map(comment => (
+                                                <div key={comment.id} className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            {comment.user_name.toLowerCase().trim() === 'doni' ? (
+                                                                <img src="/Photo.jpg" alt="Creator" className="w-10 h-10 rounded-full object-cover border-2 border-purple-500/50" />
+                                                            ) : (
+                                                                <div className="w-10 h-10 bg-indigo-500/20 rounded-full flex items-center justify-center border border-indigo-500/30">
+                                                                    <span className="text-indigo-400 text-xs font-bold">{comment.user_name[0].toUpperCase()}</span>
+                                                                </div>
+                                                            )}
+                                                            <div>
+                                                                <p className="font-bold text-white text-sm flex items-center gap-2">
+                                                                    {comment.user_name}
+                                                                    {comment.user_name.toLowerCase().trim() === 'doni' && <span className="text-[9px] bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30 font-bold uppercase tracking-tighter">CREATOR</span>}
+                                                                </p>
+                                                                <p className="text-[10px] text-gray-500">{new Date(comment.created_at).toLocaleString()}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => setAdminReplyingTo(comment)}
+                                                                className="p-1.5 bg-indigo-500/10 text-indigo-400 rounded-lg hover:bg-indigo-500 hover:text-white transition-all shadow-md shadow-indigo-500/20"
+                                                                title="Reply"
+                                                            >
+                                                                <Reply className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    const result = await Swal.fire({ title: "Delete comment?", text: "This will also delete all replies.", icon: "warning", background: "#030014", color: "#fff", showCancelButton: true });
+                                                                    if (result.isConfirmed) {
+                                                                        await supabase.from("comments").delete().eq("id", comment.id);
+                                                                        fetchExtendedData();
+                                                                    }
+                                                                }}
+                                                                className="p-1.5 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-md shadow-red-500/20"
+                                                                title="Delete"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-gray-300 text-sm leading-relaxed pl-13 select-none">"{comment.content}"</p>
+
+                                                    {/* Threaded Replies for Blogs */}
+                                                    {renderAdminComments(blog.id, comment.id)}
+
+                                                    {/* Blog Reply Input */}
+                                                    {adminReplyingTo?.id === comment.id && !adminReplyingTo?.isGeneral && (
+                                                        <div className="mt-4 bg-indigo-500/5 border border-indigo-500/20 p-4 rounded-2xl animate-fadeIn ml-8">
+                                                            <textarea
+                                                                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white focus:border-indigo-500 outline-none resize-none h-20 transition-all font-mono"
+                                                                placeholder="Type reply..."
+                                                                value={adminReplyContent}
+                                                                onChange={e => setAdminReplyContent(e.target.value)}
+                                                            />
+                                                            <div className="flex justify-end gap-3 mt-3">
+                                                                <button onClick={() => setAdminReplyingTo(null)} className="px-4 py-1 text-xs text-gray-400 hover:text-white transition-colors">Cancel</button>
+                                                                <button
+                                                                    disabled={isSubmittingReply}
+                                                                    onClick={handleAdminSubmitReply}
+                                                                    className="bg-indigo-500 hover:bg-indigo-600 px-6 py-1.5 rounded-lg text-xs font-bold transition-all shadow-lg shadow-indigo-500/25"
+                                                                >
+                                                                    {isSubmittingReply ? "Posting..." : "Send Reply"}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {!allComments.some(c => !c.parent_id) && (
+                                <div className="text-center py-20 bg-white/5 border border-white/10 rounded-3xl border-dashed">
+                                    <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-4 opacity-20" />
+                                    <p className="text-gray-500 font-medium">No blog comments found.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

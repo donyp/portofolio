@@ -164,7 +164,7 @@ const Home = () => {
     <div className="min-h-screen bg-[#030014] overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%] " id="Home">
       <div className={`relative z-10 transition-all duration-1000 ${isLoaded ? "opacity-100" : "opacity-0"}`}>
         <div className="container mx-auto  min-h-screen ">
-          <div className="flex flex-col items-center justify-center min-h-screen relative pt-36 md:pt-32">
+          <div className="flex flex-col items-center justify-center min-h-screen relative pt-16 sm:pt-20 md:pt-32">
             {/* Background Lottie Animation */}
             <div className="absolute inset-0 z-0 flex items-center justify-center opacity-30 pointer-events-none"
               data-aos="fade-in"
