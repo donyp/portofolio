@@ -34,7 +34,9 @@ import {
     Smartphone,
     ArrowUp,
     ArrowDown,
-    Reply
+    Reply,
+    Send,
+    Mail
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -81,6 +83,7 @@ const Admin = () => {
     const [adminReplyingTo, setAdminReplyingTo] = useState(null);
     const [adminReplyContent, setAdminReplyContent] = useState("");
     const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+    const [serviceOrders, setServiceOrders] = useState([]);
 
     useEffect(() => {
         const checkAuth = () => {
@@ -159,13 +162,14 @@ const Admin = () => {
 
     const fetchExtendedData = async () => {
         try {
-            const [testRes, svcRes, expRes, logRes, pvRes, commentsRes] = await Promise.all([
+            const [testRes, svcRes, expRes, logRes, pvRes, commentsRes, ordersRes] = await Promise.all([
                 supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
                 supabase.from("services").select("*").order("sort_order", { ascending: true }),
                 supabase.from("experiences").select("*").order("sort_order", { ascending: true }),
                 supabase.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(50),
                 supabase.from("page_views").select("*").order("created_at", { ascending: false }).limit(500),
-                supabase.from("comments").select("*, blogs(title)").order("created_at", { ascending: false })
+                supabase.from("comments").select("*, blogs(title)").order("created_at", { ascending: false }),
+                supabase.from("service_orders").select("*").order("created_at", { ascending: false })
             ]);
             if (testRes.data) setTestimonials(testRes.data);
             if (svcRes.data) setServices(svcRes.data);
@@ -173,6 +177,7 @@ const Admin = () => {
             if (logRes.data) setActivityLogs(logRes.data);
             if (pvRes.data) setPageViews(pvRes.data);
             if (commentsRes.data) setAllComments(commentsRes.data);
+            if (ordersRes.data) setServiceOrders(ordersRes.data);
         } catch (err) {
             console.error("Extended data fetch:", err);
         }
@@ -348,6 +353,27 @@ const Admin = () => {
             await supabase.from("activity_logs").insert({ action, entity_type, entity_name });
             fetchExtendedData();
         } catch (err) { console.error(err); }
+    };
+
+    const handleUpdateOrderStatus = async (id, status) => {
+        const { error } = await supabase.from("service_orders").update({ status }).eq("id", id);
+        if (error) Swal.fire("Error", error.message, "error");
+        else fetchExtendedData();
+    };
+
+    const handleDeleteOrder = async (id, name) => {
+        const result = await Swal.fire({
+            title: "Delete order from " + name + "?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            background: "#030014",
+            color: "#fff"
+        });
+        if (result.isConfirmed) {
+            await supabase.from("service_orders").delete().eq("id", id);
+            fetchExtendedData();
+        }
     };
 
     // Testimonial CRUD
@@ -631,6 +657,7 @@ const Admin = () => {
                         { id: "gen_comments", label: "General Comments", icon: MessageSquare },
                         { id: "testimonials", label: "Testimonials", icon: Heart },
                         { id: "services", label: "Services", icon: Palette },
+                        { id: "service_orders", label: "Orders", icon: Send },
                         { id: "timeline", label: "Timeline", icon: Briefcase },
                         { id: "analytics", label: "Analytics", icon: TrendingUp },
                         { id: "activity", label: "Activity Log", icon: Clock },
@@ -681,6 +708,7 @@ const Admin = () => {
                             { id: "gen_comments", label: "Gen Comm", icon: MessageSquare },
                             { id: "testimonials", label: "Reviews", icon: Heart },
                             { id: "services", label: "Services", icon: Palette },
+                            { id: "service_orders", label: "Orders", icon: Send },
                             { id: "timeline", label: "Timeline", icon: Briefcase },
                             { id: "analytics", label: "Analytics", icon: TrendingUp },
                             { id: "activity", label: "Logs", icon: Clock },
@@ -1614,6 +1642,82 @@ const Admin = () => {
                                 <div className="text-center py-20 bg-white/5 border border-white/10 rounded-3xl border-dashed">
                                     <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-4 opacity-20" />
                                     <p className="text-gray-500 font-medium">No blog comments found.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+                {/* Service Orders Tab */}
+                {activeTab === "service_orders" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold flex items-center gap-3">
+                                <Send className="w-8 h-8 text-pink-400" />
+                                Service Orders
+                            </h2>
+                            <div className="flex gap-2">
+                                <span className="px-3 py-1 bg-pink-500/20 text-pink-400 rounded-full text-xs font-bold border border-pink-500/30">
+                                    {serviceOrders.filter(o => o.status === 'pending').length} PENDING
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6">
+                            {serviceOrders.map(order => (
+                                <div key={order.id} className="bg-white/5 border border-white/10 p-6 rounded-3xl space-y-4 hover:border-pink-500/30 transition-all">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex gap-4">
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${order.status === 'pending' ? 'bg-orange-500/20 text-orange-400' :
+                                                    order.status === 'contacted' ? 'bg-blue-500/20 text-blue-400' :
+                                                        'bg-green-500/20 text-green-400'
+                                                }`}>
+                                                <Send className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-lg text-white">{order.name}</p>
+                                                <p className="text-pink-400 font-medium text-sm">{order.service_title}</p>
+                                                <p className="text-gray-500 text-xs mt-1">{new Date(order.created_at).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <select
+                                                value={order.status}
+                                                onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                                                className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:border-pink-500"
+                                            >
+                                                <option value="pending" className="bg-gray-900">Pending</option>
+                                                <option value="contacted" className="bg-gray-900">Contacted</option>
+                                                <option value="completed" className="bg-gray-900">Completed</option>
+                                            </select>
+                                            <button
+                                                onClick={() => handleDeleteOrder(order.id, order.name)}
+                                                className="p-2 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
+                                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Contact Info</p>
+                                            <div className="flex items-center gap-2 text-indigo-400 font-mono text-sm">
+                                                <Mail className="w-4 h-4" />
+                                                {order.contact}
+                                            </div>
+                                        </div>
+                                        <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
+                                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Message</p>
+                                            <p className="text-gray-300 text-sm italic line-clamp-2">"{order.message || 'No message provided'}"</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {serviceOrders.length === 0 && (
+                                <div className="text-center py-20 bg-white/5 border border-white/10 rounded-3xl border-dashed">
+                                    <Send className="w-12 h-12 text-gray-600 mx-auto mb-4 opacity-20" />
+                                    <p className="text-gray-500 font-medium">No service orders yet.</p>
                                 </div>
                             )}
                         </div>
