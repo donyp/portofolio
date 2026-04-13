@@ -163,8 +163,19 @@ const Services = () => {
                                     <input type="text" required className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 pl-12 text-white outline-none" placeholder="Email/WA" value={formData.contact} onChange={e => setFormData({ ...formData, contact: e.target.value })} />
                                 </div>
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-sm text-gray-300">Pesan (Opsional)</label>
+                                <textarea className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 px-4 text-white outline-none focus:border-purple-500/50 h-32 resize-none" placeholder="Detail kebutuhan Anda..." value={formData.message} onChange={e => setFormData({ ...formData, message: e.target.value })} />
+                            </div>
                             <button type="submit" disabled={isSubmitting} className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold flex items-center justify-center gap-2">
-                                {isSubmitting ? "Sending..." : "Send Order"}
+                                {isSubmitting ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    <>
+                                        <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                        Kirim Pesanan
+                                    </>
+                                )}
                             </button>
                         </form>
                     </div>

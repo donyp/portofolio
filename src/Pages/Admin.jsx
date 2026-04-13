@@ -672,7 +672,12 @@ const Admin = () => {
                                 }`}
                         >
                             <item.icon className="w-5 h-5" />
-                            {item.label}
+                            <span className="font-medium">{item.label}</span>
+                            {item.id === "service_orders" && serviceOrders.filter(o => o.status === 'pending').length > 0 && (
+                                <span className="ml-auto bg-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                    {serviceOrders.filter(o => o.status === 'pending').length}
+                                </span>
+                            )}
                         </button>
                     ))}
                 </nav>
@@ -724,6 +729,11 @@ const Admin = () => {
                             >
                                 <item.icon className="w-4 h-4" />
                                 <span className="text-sm font-medium">{item.label}</span>
+                                {item.id === "service_orders" && serviceOrders.filter(o => o.status === 'pending').length > 0 && (
+                                    <span className="bg-pink-500 text-white text-[9px] font-bold px-1 py-0.5 rounded-full min-w-[14px] text-center leading-none">
+                                        {serviceOrders.filter(o => o.status === 'pending').length}
+                                    </span>
+                                )}
                             </button>
                         ))}
                     </div>
@@ -1668,8 +1678,8 @@ const Admin = () => {
                                     <div className="flex items-start justify-between">
                                         <div className="flex gap-4">
                                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${order.status === 'pending' ? 'bg-orange-500/20 text-orange-400' :
-                                                    order.status === 'contacted' ? 'bg-blue-500/20 text-blue-400' :
-                                                        'bg-green-500/20 text-green-400'
+                                                order.status === 'contacted' ? 'bg-blue-500/20 text-blue-400' :
+                                                    'bg-green-500/20 text-green-400'
                                                 }`}>
                                                 <Send className="w-6 h-6" />
                                             </div>
