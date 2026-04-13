@@ -1496,8 +1496,14 @@ const Admin = () => {
                                                 onClick={async () => {
                                                     const result = await Swal.fire({ title: "Delete comment?", text: "This will also delete all replies.", icon: "warning", background: "#030014", color: "#fff", showCancelButton: true });
                                                     if (result.isConfirmed) {
-                                                        await supabase.from("portfolio_comments").delete().eq("id", comment.id);
-                                                        fetchExtendedData();
+                                                        const { error } = await supabase.from("portfolio_comments").delete().eq("id", comment.id);
+                                                        if (error) {
+                                                            console.error("Delete Comment Error:", error);
+                                                            Swal.fire("Error", "Gagal menghapus: " + error.message, "error");
+                                                        } else {
+                                                            Swal.fire({ title: "Deleted!", text: "Komentar telah dihapus.", icon: "success", timer: 1500, showConfirmButton: false, background: "#030014", color: "#fff" });
+                                                            fetchExtendedData();
+                                                        }
                                                     }
                                                 }}
                                                 className="p-2 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/20"
