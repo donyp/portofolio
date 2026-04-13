@@ -143,15 +143,7 @@ const BlogDetail = () => {
                                 <span className="text-xs text-gray-500">{new Date(comment.created_at).toLocaleDateString()}</span>
                             </div>
                             <p className="text-gray-300 text-sm mb-3 whitespace-pre-wrap">{comment.content}</p>
-                            <button
-                                onClick={() => {
-                                    setReplyingTo(comment);
-                                    document.getElementById("comment-form").scrollIntoView({ behavior: 'smooth' });
-                                }}
-                                className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"
-                            >
-                                <Reply className="w-3 h-3" /> Reply
-                            </button>
+                            {/* Reply button removed as per user request (Reply only via Admin) */}
 
                             {renderComments(comment.id, depth + 1)}
                         </div>
@@ -309,7 +301,7 @@ const BlogDetail = () => {
                     {/* Comment Form */}
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8">
                         <h4 className="font-semibold text-white mb-4">
-                            {replyingTo ? `Replying to ${replyingTo.user_name}` : "Leave a Comment"}
+                            Leave a Comment
                         </h4>
                         <form onSubmit={handleSubmitComment} className="space-y-4">
                             <input

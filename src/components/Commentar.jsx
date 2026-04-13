@@ -278,6 +278,7 @@ const Komentar = () => {
                 ]);
 
             if (error) throw error;
+            fetchComments();
             setReplyingTo(null);
         } catch (error) {
             setError('Failed to post comment. Please try again.');
