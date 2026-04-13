@@ -162,13 +162,14 @@ const Admin = () => {
 
     const fetchExtendedData = async () => {
         try {
-            const [testRes, svcRes, expRes, logRes, pvRes, commentsRes, ordersRes] = await Promise.all([
+            const [testRes, svcRes, expRes, logRes, pvRes, commentsRes, genCommentsRes, ordersRes] = await Promise.all([
                 supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
                 supabase.from("services").select("*").order("sort_order", { ascending: true }),
                 supabase.from("experiences").select("*").order("sort_order", { ascending: true }),
                 supabase.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(50),
                 supabase.from("page_views").select("*").order("created_at", { ascending: false }).limit(500),
                 supabase.from("comments").select("*, blogs(title)").order("created_at", { ascending: false }),
+                supabase.from("portfolio_comments").select("*").order("created_at", { ascending: false }),
                 supabase.from("service_orders").select("*").order("created_at", { ascending: false })
             ]);
             if (testRes.data) setTestimonials(testRes.data);
@@ -177,6 +178,7 @@ const Admin = () => {
             if (logRes.data) setActivityLogs(logRes.data);
             if (pvRes.data) setPageViews(pvRes.data);
             if (commentsRes.data) setAllComments(commentsRes.data);
+            if (genCommentsRes.data) setAllGeneralComments(genCommentsRes.data);
             if (ordersRes.data) setServiceOrders(ordersRes.data);
         } catch (err) {
             console.error("Extended data fetch:", err);
