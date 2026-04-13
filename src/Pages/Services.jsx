@@ -34,7 +34,19 @@ const Services = () => {
     const handleOrder = (service) => {
         const template = service.whatsapp_template ||
             `Halo Kak Doni! Saya tertarik dengan layanan ${service.title}. Bisa info lebih lanjut?`;
-        const waUrl = `https://api.whatsapp.com/send?phone=6281234567890&text=${encodeURIComponent(template)}`;
+
+        // Use custom number from DB if available, otherwise use default
+        let phone = service.whatsapp_number || "085117778351";
+
+        // Format phone: remove spaces/dashes, ensure it starts with 62
+        phone = phone.replace(/[^0-9]/g, "");
+        if (phone.startsWith("0")) {
+            phone = "62" + phone.substring(1);
+        } else if (!phone.startsWith("62")) {
+            phone = "62" + phone;
+        }
+
+        const waUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(template)}`;
         window.open(waUrl, "_blank");
     };
 

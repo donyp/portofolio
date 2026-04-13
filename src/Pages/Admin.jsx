@@ -73,7 +73,7 @@ const Admin = () => {
     const [editingTestimonial, setEditingTestimonial] = useState(null);
     const [newTestimonial, setNewTestimonial] = useState({ client_name: "", client_role: "", client_photo: "", rating: 5, review_text: "", is_featured: false });
     const [editingService, setEditingService] = useState(null);
-    const [newService, setNewService] = useState({ title: "", description: "", icon: "Palette", price_text: "", whatsapp_template: "", sort_order: 0, is_active: true });
+    const [newService, setNewService] = useState({ title: "", description: "", icon: "Palette", price_text: "", whatsapp_template: "", whatsapp_number: "", sort_order: 0, is_active: true });
     const [editingExperience, setEditingExperience] = useState(null);
     const [newExperience, setNewExperience] = useState({ year: "", title: "", company: "", description: "", sort_order: 0 });
     const [allComments, setAllComments] = useState([]);
@@ -388,7 +388,7 @@ const Admin = () => {
         else {
             Swal.fire("Success", editingService ? "Service updated!" : "Service added!", "success");
             logActivity(editingService ? "Updated" : "Created", "Service", newService.title);
-            setNewService({ title: "", description: "", icon: "Palette", price_text: "", whatsapp_template: "", sort_order: 0, is_active: true });
+            setNewService({ title: "", description: "", icon: "Palette", price_text: "", whatsapp_template: "", whatsapp_number: "", sort_order: 0, is_active: true });
             setEditingService(null);
             fetchExtendedData();
         }
@@ -1304,6 +1304,7 @@ const Admin = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Service Title" value={newService.title} onChange={e => setNewService({ ...newService, title: e.target.value })} />
                                 <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Price (e.g. Rp 500.000)" value={newService.price_text} onChange={e => setNewService({ ...newService, price_text: e.target.value })} />
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="WhatsApp Number (e.g. 085117778351)" value={newService.whatsapp_number} onChange={e => setNewService({ ...newService, whatsapp_number: e.target.value })} />
                                 <select className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none text-white" value={newService.icon} onChange={e => setNewService({ ...newService, icon: e.target.value })}>
                                     {["Palette", "PenTool", "Layout", "Film", "Camera", "Monitor", "Sparkles"].map(ic => <option key={ic} value={ic} className="bg-gray-900">{ic}</option>)}
                                 </select>
@@ -1315,7 +1316,7 @@ const Admin = () => {
                                 <button onClick={handleSaveService} className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-6 py-2 rounded-xl hover:bg-indigo-500 hover:text-white transition-all font-bold flex items-center gap-2">
                                     <Save className="w-4 h-4" /> {editingService ? "Update" : "Add"}
                                 </button>
-                                {editingService && <button onClick={() => { setEditingService(null); setNewService({ title: "", description: "", icon: "Palette", price_text: "", whatsapp_template: "", sort_order: 0, is_active: true }); }} className="text-gray-400 hover:text-white px-4 py-2">Cancel</button>}
+                                {editingService && <button onClick={() => { setEditingService(null); setNewService({ title: "", description: "", icon: "Palette", price_text: "", whatsapp_template: "", whatsapp_number: "", sort_order: 0, is_active: true }); }} className="text-gray-400 hover:text-white px-4 py-2">Cancel</button>}
                             </div>
                         </div>
                         <div className="space-y-3">
