@@ -32,8 +32,20 @@ const Services = () => {
     };
 
     const handleOrder = (service) => {
-        const template = service.whatsapp_template ||
+        let template = service.whatsapp_template ||
             `Halo Kak Doni! Saya tertarik dengan layanan ${service.title}. Bisa info lebih lanjut?`;
+
+        // If template is a full WhatsApp URL, extract the text parameter
+        if (template.includes("wa.me") || template.includes("whatsapp.com")) {
+            try {
+                const url = new URL(template);
+                const params = new URLSearchParams(url.search);
+                const extractedText = params.get("text");
+                if (extractedText) template = extractedText;
+            } catch (e) {
+                // If URL parsing fails, just use it as is
+            }
+        }
 
         // Use custom number from DB if available, otherwise use default
         let phone = service.whatsapp_number || "085117778351";
