@@ -357,8 +357,13 @@ const Admin = () => {
 
     const handleUpdateOrderStatus = async (id, status) => {
         const { error } = await supabase.from("service_orders").update({ status }).eq("id", id);
-        if (error) Swal.fire("Error", error.message, "error");
-        else fetchExtendedData();
+        if (error) {
+            console.error("Update Status Error:", error);
+            Swal.fire("Error", "Gagal merubah status: " + error.message, "error");
+        } else {
+            Swal.fire({ title: "Updated!", text: "Status berhasil diubah.", icon: "success", timer: 1500, showConfirmButton: false, background: "#030014", color: "#fff" });
+            fetchExtendedData();
+        }
     };
 
     const handleDeleteOrder = async (id, name) => {
@@ -371,8 +376,14 @@ const Admin = () => {
             color: "#fff"
         });
         if (result.isConfirmed) {
-            await supabase.from("service_orders").delete().eq("id", id);
-            fetchExtendedData();
+            const { error } = await supabase.from("service_orders").delete().eq("id", id);
+            if (error) {
+                console.error("Delete Order Error:", error);
+                Swal.fire("Error", "Gagal menghapus: " + error.message, "error");
+            } else {
+                Swal.fire({ title: "Deleted!", text: "Pesanan telah dihapus.", icon: "success", timer: 1500, showConfirmButton: false, background: "#030014", color: "#fff" });
+                fetchExtendedData();
+            }
         }
     };
 
