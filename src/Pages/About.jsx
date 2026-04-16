@@ -118,23 +118,18 @@ const AboutPage = () => {
   const [aboutImage, setAboutImage] = React.useState("");
 
   // Memoized calculations
-  const { totalProjects, totalCertificates, YearExperience } = useMemo(() => {
-    const storedProjects = JSON.parse(localStorage.getItem("projects") || "[]");
-    const storedCertificates = JSON.parse(localStorage.getItem("certificates") || "[]");
+  const [totalProjects, setTotalProjects] = React.useState(0);
+  const [totalCertificates, setTotalCertificates] = React.useState(0);
 
+  const YearExperience = useMemo(() => {
     const startDate = new Date("2021-11-06");
     const today = new Date();
     const experience = today.getFullYear() - startDate.getFullYear() -
       (today < new Date(today.getFullYear(), startDate.getMonth(), startDate.getDate()) ? 1 : 0);
-
-    return {
-      totalProjects: storedProjects.length,
-      totalCertificates: storedCertificates.length,
-      YearExperience: experience
-    };
+    return experience;
   }, []);
 
-  // Optimized AOS initialization
+  // Optimized AOS initialization and Data Fetching
   useEffect(() => {
     const initAOS = () => {
       AOS.init({
@@ -142,17 +137,33 @@ const AboutPage = () => {
       });
     };
 
-    const fetchAboutData = async () => {
+    const fetchData = async () => {
       try {
-        const { data } = await supabase.from("site_settings").select("about_image").single();
-        if (data?.about_image) setAboutImage(data.about_image);
+        // Try to get from localStorage first
+        const storedProjects = JSON.parse(localStorage.getItem("projects") || "[]");
+        const storedCertificates = JSON.parse(localStorage.getItem("certificates") || "[]");
+
+        if (storedProjects.length > 0) setTotalProjects(storedProjects.length);
+        if (storedCertificates.length > 0) setTotalCertificates(storedCertificates.length);
+
+        // Fetch from Supabase anyway to ensure latest data or if local is empty
+        const [projectsCount, certificatesCount, settingsData] = await Promise.all([
+          supabase.from("projects").select("*", { count: 'exact', head: true }),
+          supabase.from("certificates").select("*", { count: 'exact', head: true }),
+          supabase.from("site_settings").select("about_image").single()
+        ]);
+
+        if (projectsCount.count !== null) setTotalProjects(projectsCount.count);
+        if (certificatesCount.count !== null) setTotalCertificates(certificatesCount.count);
+        if (settingsData.data?.about_image) setAboutImage(settingsData.data.about_image);
+
       } catch (err) {
-        console.error("About Photo Fetch Error:", err);
+        console.error("Data Fetch Error:", err);
       }
     };
 
     initAOS();
-    fetchAboutData();
+    fetchData();
 
     // Debounced resize handler
     let resizeTimer;

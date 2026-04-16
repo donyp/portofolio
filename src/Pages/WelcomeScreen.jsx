@@ -15,7 +15,7 @@ const TypewriterEffect = ({ text }) => {
       } else {
         clearInterval(timer);
       }
-    }, 260);
+    }, 100);
 
     return () => clearInterval(timer);
   }, [text]);
@@ -39,6 +39,13 @@ const WelcomeScreen = ({ onLoadingComplete }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Check if already shown in this session
+    const hasSeenWelcome = sessionStorage.getItem("welcomeSeen");
+    if (hasSeenWelcome) {
+      onLoadingComplete?.();
+      return;
+    }
+
     AOS.init({
       duration: 1000,
       once: false,
@@ -48,12 +55,19 @@ const WelcomeScreen = ({ onLoadingComplete }) => {
     const timer = setTimeout(() => {
       setIsLoading(false);
       setTimeout(() => {
+        sessionStorage.setItem("welcomeSeen", "true");
         onLoadingComplete?.();
       }, 1000);
-    }, 4000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [onLoadingComplete]);
+
+  const handleSkip = () => {
+    setIsLoading(false);
+    sessionStorage.setItem("welcomeSeen", "true");
+    onLoadingComplete?.();
+  };
 
   const containerVariants = {
     exit: {
@@ -84,13 +98,34 @@ const WelcomeScreen = ({ onLoadingComplete }) => {
     <AnimatePresence>
       {isLoading && (
         <motion.div
-          className="fixed inset-0 bg-[#030014]"
+          className="fixed inset-0 bg-[#030014] z-[200]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit="exit"
           variants={containerVariants}
         >
           <BackgroundEffect />
+
+          {/* Skip Button */}
+          <motion.button
+            className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors flex items-center gap-2 group z-50"
+            onClick={handleSkip}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <span className="text-sm font-medium">Skip</span>
+            <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-all">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            </div>
+          </motion.button>
 
           <div className="relative min-h-screen flex items-center justify-center px-4">
             <div className="w-full max-w-4xl mx-auto">

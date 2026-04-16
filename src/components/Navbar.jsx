@@ -83,13 +83,14 @@ const Navbar = () => {
         // If on a different page and clicking a section link, navigate to home first
         if (location.pathname !== "/") {
             navigate("/");
+            // Use a longer timeout or a more robust check to ensure elements are mounted
             setTimeout(() => {
                 const section = document.querySelector(href);
                 if (section) {
                     const top = section.offsetTop - 100;
                     window.scrollTo({ top, behavior: "smooth" });
                 }
-            }, 100);
+            }, 500); // Increased to 500ms for better reliability
             return;
         }
 

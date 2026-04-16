@@ -27,8 +27,8 @@ const Blog = () => {
     };
 
     const filteredBlogs = blogs.filter(blog =>
-        blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        blog.category.toLowerCase().includes(searchQuery.toLowerCase())
+        (blog?.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (blog?.category || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
@@ -96,7 +96,7 @@ const Blog = () => {
                                         {blog.title}
                                     </h3>
                                     <p className="text-gray-400 text-sm line-clamp-3 mb-6 flex-1">
-                                        {blog.content.substring(0, 150).replace(/[#*]/g, "")}...
+                                        {(blog?.content || "").substring(0, 150).replace(/[#*]/g, "")}...
                                     </p>
                                     <div className="flex items-center gap-2 text-purple-400 font-medium text-sm group/btn">
                                         Read More

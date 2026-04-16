@@ -21,7 +21,18 @@ const Timeline = () => {
         setLoading(false);
     };
 
-    if (loading || experiences.length === 0) return null;
+    if (loading) {
+        return (
+            <section className="py-16 relative" id="Timeline">
+                <div className="max-w-4xl mx-auto text-center">
+                    <div className="inline-block w-8 h-8 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mb-4"></div>
+                    <p className="text-gray-500">Loading experiences...</p>
+                </div>
+            </section>
+        );
+    }
+
+    if (experiences.length === 0) return null;
 
     return (
         <section className="py-16 relative" id="Timeline">

@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
-import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Link, useLocation, Outlet } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
 import "./index.css";
 import Home from "./Pages/Home";
 import About from "./Pages/About";
@@ -18,7 +18,6 @@ import Admin from "./Pages/Admin";
 import Services from "./Pages/Services";
 import Testimonials from "./components/Testimonials";
 import { supabase } from "./supabase";
-import { useEffect } from "react";
 
 // Page transition wrapper
 const PageTransition = ({ children }) => (
@@ -32,6 +31,47 @@ const PageTransition = ({ children }) => (
   </motion.div>
 );
 
+// Footer Component
+const Footer = () => (
+  <footer>
+    <center>
+      <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
+      <div className="flex justify-center items-center gap-2">
+        <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
+          © 2026{" "}
+          <Link to="/" className="hover:underline">
+            Doni Sugiharto
+          </Link>
+          . All Rights Reserved.
+        </span>
+        <Link to="/admin" className="opacity-0 hover:opacity-10 transition-opacity cursor-default w-4 h-4 mb-4">.</Link>
+      </div>
+    </center>
+  </footer>
+);
+
+// Layout Component
+const Layout = ({ showWelcome, setShowWelcome }) => (
+  <>
+    <AnimatePresence mode="wait">
+      {showWelcome && (
+        <WelcomeScreen onLoadingComplete={() => setShowWelcome(false)} />
+      )}
+    </AnimatePresence>
+
+    {!showWelcome && (
+      <>
+        <Navbar />
+        <AnimatedBackground />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
+        <Footer />
+      </>
+    )}
+  </>
+);
+
 // Page view tracker
 const usePageViewTracker = () => {
   const location = useLocation();
@@ -40,7 +80,7 @@ const usePageViewTracker = () => {
     const trackPageView = async () => {
       try {
         const visitorId = localStorage.getItem("visitor_id") || (() => {
-          const id = crypto.randomUUID?.() || Math.random().toString(36).substr(2, 9);
+          const id = crypto.randomUUID?.() || Math.random().toString(36).slice(2, 11);
           localStorage.setItem("visitor_id", id);
           return id;
         })();
@@ -53,7 +93,7 @@ const usePageViewTracker = () => {
           device_type: deviceType
         });
       } catch (err) {
-        // Silently fail - analytics shouldn't break the app
+        // Silently fail
       }
     };
 
@@ -66,133 +106,21 @@ const PageViewTracker = () => {
   return null;
 };
 
-const LandingPage = ({ showWelcome, setShowWelcome }) => {
-  return (
-    <>
-      <AnimatePresence mode="wait">
-        {showWelcome && (
-          <WelcomeScreen onLoadingComplete={() => setShowWelcome(false)} />
-        )}
-      </AnimatePresence>
-
-      {!showWelcome && (
-        <>
-          <Navbar />
-          <AnimatedBackground />
-          <Home />
-          <LatestBlog />
-          <About />
-          <Portofolio />
-          <Testimonials />
-          <ContactPage />
-          <footer>
-            <center>
-              <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
-              <div className="flex justify-center items-center gap-2">
-                <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
-                  © 2026{" "}
-                  <Link to="/" className="hover:underline">
-                    Doni Sugiharto
-                  </Link>
-                  . All Rights Reserved.
-                </span>
-                {/* Hidden Admin Button */}
-                <Link to="/admin" className="opacity-0 hover:opacity-10 transition-opacity cursor-default w-4 h-4 mb-4">.</Link>
-              </div>
-            </center>
-          </footer>
-        </>
-      )}
-    </>
-  );
-};
-
-const ProjectPageLayout = () => (
-  <PageTransition>
-    <Navbar />
-    <ProjectDetails />
-    <footer>
-      <center>
-        <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
-        <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
-          © 2026{" "}
-          <a href="/" className="hover:underline">
-            Doni Sugiharto
-          </a>
-          . All Rights Reserved.
-        </span>
-      </center>
-    </footer>
-  </PageTransition>
+const HomePage = () => (
+  <>
+    <Home />
+    <LatestBlog />
+    <About />
+    <Portofolio />
+    <Testimonials />
+    <ContactPage />
+  </>
 );
-
-const BlogPageLayout = () => (
-  <PageTransition>
-    <Navbar />
-    <Blog />
-    <footer>
-      <center>
-        <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
-        <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
-          © 2026{" "}
-          <a href="/" className="hover:underline">
-            Doni Sugiharto
-          </a>
-          . All Rights Reserved.
-        </span>
-      </center>
-    </footer>
-  </PageTransition>
-);
-
-const BlogDetailLayout = () => (
-  <PageTransition>
-    <Navbar />
-    <BlogDetail />
-    <footer>
-      <center>
-        <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
-        <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
-          © 2026{" "}
-          <a href="/" className="hover:underline">
-            Doni Sugiharto
-          </a>
-          . All Rights Reserved.
-        </span>
-      </center>
-    </footer>
-  </PageTransition>
-);
-
-const ServicesPageLayout = () => (
-  <PageTransition>
-    <Navbar />
-    <Services />
-    <footer>
-      <center>
-        <hr className="my-3 border-gray-400 opacity-15 sm:mx-auto lg:my-6 text-center" />
-        <span className="block text-sm pb-4 text-gray-500 text-center dark:text-gray-400">
-          © 2026{" "}
-          <a href="/" className="hover:underline">
-            Doni Sugiharto
-          </a>
-          . All Rights Reserved.
-        </span>
-      </center>
-    </footer>
-  </PageTransition>
-);
-
-
 
 function App() {
   const [showWelcome, setShowWelcome] = useState(() => {
     return window.location.pathname === "/";
   });
-
-  const handleWelcomeComplete = () => {
-    setShowWelcome(false);
-  };
 
   useEffect(() => {
     const fetchSEO = async () => {
@@ -220,17 +148,17 @@ function App() {
   return (
     <BrowserRouter>
       <PageViewTracker />
-      <AnimatePresence mode="wait">
-        <Routes>
-          <Route path="/" element={<LandingPage showWelcome={showWelcome} setShowWelcome={handleWelcomeComplete} />} />
-          <Route path="/project/:id" element={<ProjectPageLayout />} />
-          <Route path="/blog" element={<BlogPageLayout />} />
-          <Route path="/blog/:id" element={<BlogDetailLayout />} />
-          <Route path="/services" element={<ServicesPageLayout />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </AnimatePresence>
+      <Routes>
+        <Route element={<Layout showWelcome={showWelcome} setShowWelcome={() => setShowWelcome(false)} />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/project/:id" element={<ProjectDetails />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:id" element={<BlogDetail />} />
+          <Route path="/services" element={<Services />} />
+        </Route>
+        <Route path="/admin" element={<Admin />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
     </BrowserRouter>
   );
 }

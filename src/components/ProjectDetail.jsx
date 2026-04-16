@@ -112,62 +112,81 @@ const ProjectDetails = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const storedProjects = JSON.parse(localStorage.getItem("projects")) || [];
-    const currentIndex = storedProjects.findIndex((p) => String(p.id) === id);
-    const selectedProject = storedProjects[currentIndex];
+    const fetchProjectData = async () => {
+      // Try to get from localStorage first
+      const storedProjects = JSON.parse(localStorage.getItem("projects")) || [];
+      const currentIndex = storedProjects.findIndex((p) => String(p.id) === id);
+      let selectedProject = storedProjects[currentIndex];
 
-    if (selectedProject) {
-      const enhancedProject = {
-        ...selectedProject,
-        Features: selectedProject.Features || [],
-        TechStack: selectedProject.TechStack || [],
-        Github: selectedProject.Github || 'https://github.com/donyp',
-      };
-      setProject(enhancedProject);
-      // Reset states
-      setUserRating(0);
-      setIsLiked(false);
-      setLikes(enhancedProject.likes || 0);
-      setAvgRating(enhancedProject.average_rating || 0);
-      setTotalRatings(enhancedProject.total_ratings || 0);
-
-      const likedProjects = JSON.parse(localStorage.getItem('likedProjects') || '[]');
-      if (likedProjects.includes(enhancedProject.id)) {
-        setIsLiked(true);
-      }
-
-      // Check if user already rated
-      const ratedProjects = JSON.parse(localStorage.getItem('ratedProjects') || '{}');
-      if (ratedProjects[enhancedProject.id]) {
-        setUserRating(ratedProjects[enhancedProject.id]);
-      }
-
-      // Next / Prev navigation logic
-      setPrevProject(currentIndex > 0 ? storedProjects[currentIndex - 1] : null);
-      setNextProject(currentIndex < storedProjects.length - 1 ? storedProjects[currentIndex + 1] : null);
-
-      // Views logic
-      const handleView = async () => {
-        const viewedProjects = JSON.parse(localStorage.getItem('viewedProjects') || '[]');
-        let currentViews = enhancedProject.views || 0;
-
-        if (!viewedProjects.includes(enhancedProject.id)) {
-          currentViews += 1;
-          localStorage.setItem('viewedProjects', JSON.stringify([...viewedProjects, enhancedProject.id]));
-
-          // Update cache
-          const cachedProjects = JSON.parse(localStorage.getItem('projects') || '[]');
-          const updatedProjects = cachedProjects.map(p =>
-            p.id === enhancedProject.id ? { ...p, views: currentViews } : p
-          );
-          localStorage.setItem('projects', JSON.stringify(updatedProjects));
-
-          await supabase.from('projects').update({ views: currentViews }).eq('id', enhancedProject.id);
+      // FALLBACK: Fetch from Supabase if not found in local cache
+      if (!selectedProject) {
+        try {
+          const { data, error } = await supabase.from("projects").select("*").eq("id", id).single();
+          if (data) selectedProject = data;
+        } catch (err) {
+          console.error("Supabase fallback fetch error:", err);
         }
-        setViews(currentViews);
-      };
-      handleView();
-    }
+      }
+
+      if (selectedProject) {
+        const enhancedProject = {
+          ...selectedProject,
+          Features: selectedProject.Features || [],
+          TechStack: selectedProject.TechStack || [],
+          Github: selectedProject.Github || 'https://github.com/donyp',
+        };
+        setProject(enhancedProject);
+        // Reset states
+        setUserRating(0);
+        setIsLiked(false);
+        setLikes(enhancedProject.likes || 0);
+        setAvgRating(enhancedProject.average_rating || 0);
+        setTotalRatings(enhancedProject.total_ratings || 0);
+
+        const likedProjects = JSON.parse(localStorage.getItem('likedProjects') || '[]');
+        if (likedProjects.includes(enhancedProject.id)) {
+          setIsLiked(true);
+        }
+
+        // Check if user already rated
+        const ratedProjects = JSON.parse(localStorage.getItem('ratedProjects') || '{}');
+        if (ratedProjects[enhancedProject.id]) {
+          setUserRating(ratedProjects[enhancedProject.id]);
+        }
+
+        // Next / Prev navigation logic
+        if (storedProjects.length > 0) {
+          setPrevProject(currentIndex > 0 ? storedProjects[currentIndex - 1] : null);
+          setNextProject(currentIndex < storedProjects.length - 1 ? storedProjects[currentIndex + 1] : null);
+        }
+
+        // Views logic
+        const handleView = async () => {
+          const viewedProjects = JSON.parse(localStorage.getItem('viewedProjects') || '[]');
+          let currentViews = enhancedProject.views || 0;
+
+          if (!viewedProjects.includes(enhancedProject.id)) {
+            currentViews += 1;
+            localStorage.setItem('viewedProjects', JSON.stringify([...viewedProjects, enhancedProject.id]));
+
+            // Update cache safely
+            const cachedProjects = JSON.parse(localStorage.getItem('projects') || '[]');
+            if (cachedProjects.length > 0) {
+              const updatedProjects = cachedProjects.map(p =>
+                p.id === enhancedProject.id ? { ...p, views: currentViews } : p
+              );
+              localStorage.setItem('projects', JSON.stringify(updatedProjects));
+            }
+
+            await supabase.from('projects').update({ views: currentViews }).eq('id', enhancedProject.id);
+          }
+          setViews(currentViews);
+        };
+        handleView();
+      }
+    };
+
+    fetchProjectData();
   }, [id]);
 
   const handleRating = async (rating) => {

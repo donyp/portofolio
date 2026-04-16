@@ -36,7 +36,18 @@ const Testimonials = () => {
         return () => clearInterval(interval);
     }, [testimonials.length]);
 
-    if (loading || testimonials.length === 0) return null;
+    if (loading) {
+        return (
+            <section className="py-20 px-[5%] md:px-[10%] bg-transparent relative overflow-hidden" id="Testimonials">
+                <div className="max-w-5xl mx-auto text-center">
+                    <div className="inline-block w-8 h-8 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mb-4"></div>
+                    <p className="text-gray-500">Loading reviews...</p>
+                </div>
+            </section>
+        );
+    }
+
+    if (testimonials.length === 0) return null;
 
     const current = testimonials[currentIndex];
 
