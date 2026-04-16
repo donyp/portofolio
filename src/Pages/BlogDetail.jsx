@@ -4,6 +4,7 @@ import { supabase } from "../supabase";
 import { Calendar, Tag, ArrowLeft, Clock, Share2, Twitter, Instagram, MessageCircle, Eye, Heart, User, MessageSquare, Reply, Send } from "lucide-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import toast from "react-hot-toast";
 
 const BlogDetail = () => {
     const { id } = useParams();
@@ -70,7 +71,7 @@ const BlogDetail = () => {
 
         const isAdmin = sessionStorage.getItem('admin_auth') === 'true';
         if (!isAdmin && commenterName.trim().toLowerCase() === 'doni') {
-            alert("Nama 'Doni' dilindungi. Silakan gunakan nama lain.");
+            toast.error("Nama tersebut tidak dapat digunakan");
             return;
         }
 
@@ -92,10 +93,11 @@ const BlogDetail = () => {
                 setComments([...comments, data[0]]);
                 setNewComment("");
                 setReplyingTo(null);
+                toast.success("Komentar berhasil dikirim!");
             }
         } catch (err) {
             console.error("Error posting comment:", err);
-            alert("Failed to post comment. Please try again.");
+            toast.error("Gagal mengirim komentar. Silakan coba lagi.");
         } finally {
             setIsSubmittingComment(false);
         }
@@ -180,7 +182,7 @@ const BlogDetail = () => {
                 break;
             case "instagram":
                 navigator.clipboard.writeText(text);
-                alert("Teks dan link sudah dicopy! IG belum support direct link share via web, silakan paste di story/post IG kamu ya.");
+                toast.info("Teks dan link sudah dicopy! IG belum support direct link share via web, silakan paste di story/post IG kamu ya.");
                 return;
             default:
                 break;

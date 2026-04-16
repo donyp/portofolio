@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from "react-hot-toast";
 import { Link } from 'react-router-dom';
 import { ExternalLink, ArrowRight, Heart, Eye, Star } from 'lucide-react';
 import { supabase } from '../supabase';
@@ -45,14 +46,14 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id, likes = 0
   const handleLiveDemo = (e) => {
     if (!ProjectLink) {
       e.preventDefault();
-      alert("Live demo link is not available");
+      toast.info("Link demo tidak tersedia");
     }
   };
 
   const handleDetails = (e) => {
     if (!id) {
       e.preventDefault();
-      alert("Project details are not available");
+      toast.info("Detail proyek tidak tersedia");
     }
   };
 

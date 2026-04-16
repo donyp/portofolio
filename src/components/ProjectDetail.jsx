@@ -80,17 +80,11 @@ const ProjectStats = ({ project }) => {
   );
 };
 
+import toast from "react-hot-toast";
+
 const handleGithubClick = (githubLink) => {
   if (githubLink === 'Private') {
-    Swal.fire({
-      icon: 'info',
-      title: 'Source Code Private',
-      text: 'Maaf, source code untuk proyek ini bersifat privat.',
-      confirmButtonText: 'Mengerti',
-      confirmButtonColor: '#3085d6',
-      background: '#030014',
-      color: '#ffffff'
-    });
+    toast.info("Maaf, source code untuk proyek ini bersifat privat.");
     return false;
   }
   return true;
@@ -192,14 +186,7 @@ const ProjectDetails = () => {
   const handleRating = async (rating) => {
     console.log("Handle Rating trigged with:", rating);
     if (userRating > 0) {
-      console.log("Rating blocked - user already rated:", userRating);
-      Swal.fire({
-        icon: 'info',
-        title: 'Sudah Rating',
-        text: 'Terimakasih! Kakak sudah memberikan rating untuk project ini sebelumnya.',
-        background: '#030014',
-        color: '#ffffff'
-      });
+      toast.info("Terimakasih! Kakak sudah memberikan rating sebelumnya.");
       return;
     }
 
@@ -230,13 +217,7 @@ const ProjectDetails = () => {
         user_session_id: 'anon' // Simple anon session
       });
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Terimakasih',
-        text: 'Rating anda sangat berarti untuk saya',
-        background: '#030014',
-        color: '#ffffff'
-      });
+      toast.success("Rating anda sangat berarti untuk saya!");
     } catch (err) {
       console.error("Error updating rating:", err);
     }

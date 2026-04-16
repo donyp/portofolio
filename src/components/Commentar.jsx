@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
+import toast from "react-hot-toast";
 import { createClient } from '@supabase/supabase-js';
 import { MessageCircle, UserCircle2, Loader2, AlertCircle, Send, ImagePlus, X, Pin } from 'lucide-react';
 import AOS from "aos";
@@ -105,7 +106,7 @@ const CommentForm = memo(({ onSubmit, isSubmitting, error, placeholder = "Write 
         if (!newComment.trim() || !userName.trim()) return;
 
         if (!isAdmin && userName.toLowerCase().trim() === 'doni') {
-            alert("Nama 'Doni' dilindungi. Silakan gunakan nama lain.");
+            toast.error("Nama tersebut tidak dapat digunakan");
             return;
         }
 
@@ -206,15 +207,15 @@ const Komentar = () => {
     const handleLogoClick = () => {
         const isAdmin = sessionStorage.getItem('admin_auth') === 'true';
         if (isAdmin) {
-            alert("Admin session active. Posting as Doni.");
+            toast.success("Admin session active. Posting as Doni.");
             return;
         }
         const password = prompt("Enter Creator Access Code:");
         if (password === 'doni123') {
             setIsCreatorMode(true);
-            alert("Creator Mode Active!");
+            toast.success("Creator Mode Active!");
         } else {
-            alert("Unauthorized!");
+            toast.error("Unauthorized!");
         }
     };
 
@@ -280,8 +281,9 @@ const Komentar = () => {
             if (error) throw error;
             fetchComments();
             setReplyingTo(null);
+            toast.success("Komentar berhasil dikirim!");
         } catch (error) {
-            setError('Failed to post comment. Please try again.');
+            toast.error("Gagal mengirim komentar. Silakan coba lagi.");
             console.error('Error adding comment: ', error);
         } finally {
             setIsSubmitting(false);

@@ -117,6 +117,8 @@ const HomePage = () => (
   </>
 );
 
+import { Toaster } from "react-hot-toast";
+
 function App() {
   const [showWelcome, setShowWelcome] = useState(() => {
     return window.location.pathname === "/";
@@ -147,6 +149,20 @@ function App() {
 
   return (
     <BrowserRouter>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          className: 'glass-toast',
+          style: {
+            background: 'rgba(15, 12, 41, 0.8)',
+            color: '#fff',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '12px',
+            fontSize: '14px'
+          },
+        }}
+      />
       <PageViewTracker />
       <Routes>
         <Route element={<Layout showWelcome={showWelcome} setShowWelcome={() => setShowWelcome(false)} />}>

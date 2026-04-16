@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { supabase } from "../supabase";
 import {
     LayoutDashboard,
@@ -119,9 +120,10 @@ const Admin = () => {
                 if (result.value === passcode) {
                     sessionStorage.setItem("admin_auth", "true");
                     setIsAuthenticated(true);
+                    toast.success("Welcome back, Doni!");
                     fetchData();
                 } else {
-                    Swal.fire("Access Denied", "Incorrect passcode", "error");
+                    toast.error("Access Denied: Incorrect passcode");
                     window.location.href = "/";
                 }
             } else {
@@ -220,9 +222,9 @@ const Admin = () => {
             : await supabase.from("blogs").insert([newBlog]);
 
         if (error) {
-            Swal.fire("Error", error.message, "error");
+            toast.error("Error: " + error.message);
         } else {
-            Swal.fire("Success", editingBlog ? "Blog updated!" : "Blog post created!", "success");
+            toast.success(editingBlog ? "Blog updated!" : "Blog post created!");
             setNewBlog({ title: "", content: "", image_url: "", category: "Tech" });
             setIsEditingBlog(false);
             setEditingBlog(null);
@@ -246,8 +248,11 @@ const Admin = () => {
 
         if (result.isConfirmed) {
             const { error } = await supabase.from("blogs").delete().eq("id", id);
-            if (error) Swal.fire("Error", error.message, "error");
-            else fetchData();
+            if (error) toast.error("Error: " + error.message);
+            else {
+                toast.success("Blog deleted successfully");
+                fetchData();
+            }
         }
     };
 
@@ -259,9 +264,9 @@ const Admin = () => {
             : await supabase.from("projects").insert([newProject]);
 
         if (error) {
-            Swal.fire("Error", error.message, "error");
+            toast.error("Error: " + error.message);
         } else {
-            Swal.fire("Success", editingProject ? "Project updated!" : "Project created!", "success");
+            toast.success(editingProject ? "Project updated!" : "Project created!");
             setNewProject({ Title: "", Description: "", Link: "", Img: "", category: "Design", video_url: "", lottie_url: "" });
             setIsEditingProject(false);
             setEditingProject(null);
@@ -283,8 +288,11 @@ const Admin = () => {
         });
         if (result.isConfirmed) {
             const { error } = await supabase.from("projects").delete().eq("id", id);
-            if (error) Swal.fire("Error", error.message, "error");
-            else fetchData();
+            if (error) toast.error("Error: " + error.message);
+            else {
+                toast.success("Project deleted successfully");
+                fetchData();
+            }
         }
     };
 
@@ -292,9 +300,9 @@ const Admin = () => {
         setLoading(true);
         const { error } = await supabase.from("site_settings").update(siteSettings).eq("id", siteSettings.id);
         if (error) {
-            Swal.fire("Error", error.message, "error");
+            toast.error("Error: " + error.message);
         } else {
-            Swal.fire("Success", "Site settings updated!", "success");
+            toast.success("Site settings updated!");
             fetchData();
         }
         setLoading(false);
@@ -1499,9 +1507,9 @@ const Admin = () => {
                                                         const { error } = await supabase.from("portfolio_comments").delete().eq("id", comment.id);
                                                         if (error) {
                                                             console.error("Delete Comment Error:", error);
-                                                            Swal.fire("Error", "Gagal menghapus: " + error.message, "error");
+                                                            toast.error("Gagal menghapus: " + error.message);
                                                         } else {
-                                                            Swal.fire({ title: "Deleted!", text: "Komentar telah dihapus.", icon: "success", timer: 1500, showConfirmButton: false, background: "#030014", color: "#fff" });
+                                                            toast.success("Komentar telah dihapus.");
                                                             fetchExtendedData();
                                                         }
                                                     }
@@ -1541,11 +1549,11 @@ const Admin = () => {
                                                                 content: adminReplyContent,
                                                                 parent_id: comment.id
                                                             }]);
-                                                            Swal.fire({ title: "Success", text: "Reply posted!", icon: "success", background: "#030014", color: "#fff" });
+                                                            toast.success("Reply posted!");
                                                             setAdminReplyContent("");
                                                             setAdminReplyingTo(null);
                                                             fetchExtendedData();
-                                                        } catch (err) { Swal.fire("Error", "Failed to post reply.", "error"); }
+                                                        } catch (err) { toast.error("Failed to post reply."); }
                                                         finally { setIsSubmittingReply(false); }
                                                     }}
                                                     className="bg-indigo-500 hover:bg-indigo-600 px-8 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-500/25"

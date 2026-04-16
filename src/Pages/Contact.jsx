@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { Share2, User, Mail, MessageSquare, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 import SocialLinks from "../components/SocialLinks";
@@ -33,15 +34,7 @@ const ContactPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    Swal.fire({
-      title: 'Mengirim Pesan Anda..',
-      html: 'Harap tunggu!',
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      }
-    });
+    const loadingToast = toast.loading("Mengirim pesan Anda...");
 
     try {
       // Ganti dengan email Anda di FormSubmit
@@ -62,15 +55,7 @@ const ContactPage = () => {
         },
       });
 
-
-      Swal.fire({
-        title: 'Berhasil!',
-        text: 'Pesan Anda berhasil terkirim!',
-        icon: 'success',
-        confirmButtonColor: '#6366f1',
-        timer: 2000,
-        timerProgressBar: true
-      });
+      toast.success("Pesan Anda berhasil terkirim!", { id: loadingToast });
 
       setFormData({
         name: "",
@@ -80,14 +65,7 @@ const ContactPage = () => {
 
     } catch (error) {
       if (error.request && error.request.status === 0) {
-        Swal.fire({
-          title: 'Berhasil!',
-          text: 'Pesan Anda berhasil terkirim!',
-          icon: 'success',
-          confirmButtonColor: '#6366f1',
-          timer: 2000,
-          timerProgressBar: true
-        });
+        toast.success("Pesan Anda berhasil terkirim!", { id: loadingToast });
 
         setFormData({
           name: "",
@@ -95,12 +73,7 @@ const ContactPage = () => {
           message: "",
         });
       } else {
-        Swal.fire({
-          title: 'Gagal!',
-          text: 'Terjadi kesalahan. Silakan coba lagi nanti.',
-          icon: 'error',
-          confirmButtonColor: '#6366f1'
-        });
+        toast.error("Terjadi kesalahan. Silakan coba lagi nanti.", { id: loadingToast });
       }
     } finally {
       setIsSubmitting(false);
