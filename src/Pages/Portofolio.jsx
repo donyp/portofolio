@@ -118,6 +118,10 @@ export default function FullWidthTabs() {
   useEffect(() => {
     AOS.init({
       once: false,
+      duration: 1000,
+      easing: 'ease-out-cubic',
+      offset: 100, // Trigger slightly before the element is fully in view
+      delay: 50,
     });
   }, []);
 

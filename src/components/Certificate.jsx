@@ -59,7 +59,6 @@ const Certificate = ({ ImgSertif }) => {
 						className="certificate-image"
 						src={ImgSertif}
 						alt="Certificate"
-						loading="lazy"
 						style={{
 							width: "100%",
 							height: "auto",
