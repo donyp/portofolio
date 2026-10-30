@@ -36,7 +36,7 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id, likes = 0
       );
       localStorage.setItem('projects', JSON.stringify(updatedProjects));
 
-      const { error } = await supabase.from('projects').update({ likes: newLikes }).eq('id', id);
+      const { error } = await supabase.rpc('increment_project_likes', { p_id: String(id) });
       if (error) console.error("Supabase update error:", error);
     } catch (err) {
       console.error("Error updating likes:", err);

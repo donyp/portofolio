@@ -279,10 +279,7 @@ const AboutPage = () => {
                 data-aos-duration="1200"
                 onClick={async () => {
                   try {
-                    const { data } = await supabase.from('user_analytics').select('click_count').eq('action_type', 'resume_download').single();
-                    if (data) {
-                      await supabase.from('user_analytics').update({ click_count: data.click_count + 1 }).eq('action_type', 'resume_download');
-                    }
+                    await supabase.rpc('increment_click_count', { p_action: 'resume_download' });
                   } catch (error) {
                     console.error("Analytics error:", error);
                   }

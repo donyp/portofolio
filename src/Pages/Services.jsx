@@ -44,10 +44,24 @@ const Services = () => {
 
     const handleOrderSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.name || !formData.contact) {
+        const name = (formData.name || "").trim();
+        const contact = (formData.contact || "").trim();
+        const message = (formData.message || "").trim();
+
+        if (!name || !contact) {
             Swal.fire({
                 title: "Error!",
                 text: "Nama dan Kontak wajib diisi.",
+                icon: "error",
+                background: "#030014",
+                color: "#ffffff"
+            });
+            return;
+        }
+        if (name.length > 80 || contact.length > 100 || message.length > 1000) {
+            Swal.fire({
+                title: "Error!",
+                text: "Input terlalu panjang (Nama max 80, Kontak max 100, Pesan max 1000 karakter).",
                 icon: "error",
                 background: "#030014",
                 color: "#ffffff"
@@ -62,9 +76,9 @@ const Services = () => {
                 .insert([{
                     service_id: selectedService.id,
                     service_title: selectedService.title,
-                    name: formData.name,
-                    contact: formData.contact,
-                    message: formData.message,
+                    name,
+                    contact,
+                    message,
                     status: 'pending'
                 }]);
 

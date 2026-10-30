@@ -172,7 +172,7 @@ const ProjectDetails = () => {
               localStorage.setItem('projects', JSON.stringify(updatedProjects));
             }
 
-            await supabase.from('projects').update({ views: currentViews }).eq('id', enhancedProject.id);
+            await supabase.rpc('increment_project_views', { p_id: String(enhancedProject.id) });
           }
           setViews(currentViews);
         };
@@ -202,20 +202,13 @@ const ProjectDetails = () => {
       ratedProjects[project.id] = rating;
       localStorage.setItem('ratedProjects', JSON.stringify(ratedProjects));
 
-      // Update Supabase
-      const { error } = await supabase.from('projects').update({
-        average_rating: newAvgRating,
-        total_ratings: newTotalRatings
-      }).eq('id', project.id);
+      // Update Supabase via secure RPC
+      const { error } = await supabase.rpc('add_project_rating', {
+        p_id: String(project.id),
+        p_rating: rating
+      });
 
       if (error) throw error;
-
-      // Log the rating
-      await supabase.from('ratings_log').insert({
-        project_id: project.id,
-        rating: rating,
-        user_session_id: 'anon' // Simple anon session
-      });
 
       toast.success("Rating anda sangat berarti untuk saya!");
     } catch (err) {
@@ -240,7 +233,7 @@ const ProjectDetails = () => {
       );
       localStorage.setItem('projects', JSON.stringify(updatedProjects));
 
-      const { error } = await supabase.from('projects').update({ likes: newLikes }).eq('id', project.id);
+      const { error } = await supabase.rpc('increment_project_likes', { p_id: String(project.id) });
       if (error) console.error("Supabase update error:", error);
     } catch (err) {
       console.error("Error updating likes:", err);

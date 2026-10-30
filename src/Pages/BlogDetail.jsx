@@ -48,7 +48,8 @@ const BlogDetail = () => {
             const viewedBlogs = JSON.parse(sessionStorage.getItem('viewedBlogs') || '[]');
             if (!viewedBlogs.includes(id)) {
                 const newViews = (data.views || 0) + 1;
-                await supabase.from('blogs').update({ views: newViews }).eq('id', id);
+                setBlog(prev => prev ? { ...prev, views: newViews } : prev);
+                await supabase.rpc('increment_blog_views', { p_id: String(id) });
                 sessionStorage.setItem('viewedBlogs', JSON.stringify([...viewedBlogs, id]));
             }
 
@@ -67,10 +68,21 @@ const BlogDetail = () => {
 
     const handleSubmitComment = async (e) => {
         e.preventDefault();
-        if (!newComment.trim() || !commenterName.trim()) return;
+        const content = newComment.trim();
+        const name = commenterName.trim();
+        if (!content || !name) return;
+        if (content.length > 2000) {
+            toast.error("Komentar maksimal 2000 karakter");
+            return;
+        }
+        if (name.length > 60) {
+            toast.error("Nama maksimal 60 karakter");
+            return;
+        }
 
-        const isAdmin = sessionStorage.getItem('admin_auth') === 'true';
-        if (!isAdmin && commenterName.trim().toLowerCase() === 'doni') {
+        const { data: { session } } = await supabase.auth.getSession();
+        const isAdmin = !!session;
+        if (!isAdmin && name.toLowerCase() === 'doni') {
             toast.error("Nama tersebut tidak dapat digunakan");
             return;
         }
@@ -81,8 +93,8 @@ const BlogDetail = () => {
                 .from('comments')
                 .insert([{
                     blog_id: id,
-                    user_name: commenterName,
-                    content: newComment,
+                    user_name: name,
+                    content,
                     parent_id: replyingTo ? replyingTo.id : null
                 }])
                 .select();
@@ -165,7 +177,7 @@ const BlogDetail = () => {
         const likedBlogs = JSON.parse(localStorage.getItem('likedBlogs') || '[]');
         localStorage.setItem('likedBlogs', JSON.stringify([...likedBlogs, id]));
 
-        await supabase.from('blogs').update({ likes: newLikes }).eq('id', id);
+        await supabase.rpc('increment_blog_likes', { p_id: String(id) });
     };
 
     const shareOnSocial = (platform) => {

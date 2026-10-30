@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import toast from "react-hot-toast";
-import { createClient } from '@supabase/supabase-js';
 import { MessageCircle, UserCircle2, Loader2, AlertCircle, Send, ImagePlus, X, Pin } from 'lucide-react';
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -200,23 +199,20 @@ const Komentar = () => {
     const [showAll, setShowAll] = useState(false);
 
     useEffect(() => {
-        const isAdmin = sessionStorage.getItem('admin_auth') === 'true';
-        if (isAdmin) setIsCreatorMode(true);
+        const checkAdmin = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) setIsCreatorMode(true);
+        };
+        checkAdmin();
     }, []);
 
-    const handleLogoClick = () => {
-        const isAdmin = sessionStorage.getItem('admin_auth') === 'true';
-        if (isAdmin) {
+    const handleLogoClick = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
             toast.success("Admin session active. Posting as Doni.");
             return;
         }
-        const password = prompt("Enter Creator Access Code:");
-        if (password === 'doni123') {
-            setIsCreatorMode(true);
-            toast.success("Creator Mode Active!");
-        } else {
-            toast.error("Unauthorized!");
-        }
+        window.location.href = "/admin";
     };
 
     const fetchComments = async () => {
@@ -265,15 +261,33 @@ const Komentar = () => {
         setError('');
         setIsSubmitting(true);
 
+        const content = (newComment || '').trim();
+        const name = (userName || '').trim();
+
+        if (!content || !name) {
+            setError('Komentar dan nama wajib diisi.');
+            setIsSubmitting(false);
+            return;
+        }
+        if (content.length > 1000) {
+            setError('Komentar maksimal 1000 karakter.');
+            setIsSubmitting(false);
+            return;
+        }
+        if (name.length > 60) {
+            setError('Nama maksimal 60 karakter.');
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             const { error } = await supabase
                 .from('portfolio_comments')
                 .insert([
                     {
-                        content: newComment,
-                        user_name: userName,
+                        content,
+                        user_name: name,
                         parent_id: parentId,
-                        is_pinned: false,
                         created_at: new Date().toISOString()
                     }
                 ]);

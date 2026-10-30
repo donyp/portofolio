@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { supabase } from "../supabase";
 import {
@@ -43,6 +43,7 @@ import Swal from "sweetalert2";
 
 const Admin = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const loginShown = useRef(false);
     const [activeTab, setActiveTab] = useState("stats");
     const [loading, setLoading] = useState(false);
     const [stats, setStats] = useState({ projects: 0, blogs: 0, likes: 0, views: 0 });
@@ -87,45 +88,60 @@ const Admin = () => {
     const [serviceOrders, setServiceOrders] = useState([]);
 
     useEffect(() => {
-        const checkAuth = () => {
-            const auth = sessionStorage.getItem("admin_auth");
-            if (auth === "true") {
+        const checkAuth = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
                 setIsAuthenticated(true);
                 fetchData();
             } else {
-                promptPasscode();
+                promptLogin();
             }
         };
         checkAuth();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_OUT') {
+                setIsAuthenticated(false);
+                window.location.href = "/";
+            }
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
-    const promptPasscode = () => {
+    const promptLogin = () => {
+        if (loginShown.current) return;
+        loginShown.current = true;
         Swal.fire({
-            title: "Admin Access",
-            input: "password",
-            inputPlaceholder: "Enter Passcode",
+            title: "Admin Login",
+            html: `
+                <input id="swal-login-email" class="swal2-input" type="email" placeholder="Email" autocomplete="username" style="background:#1a1033;color:#fff;border:1px solid rgba(255,255,255,0.2)">
+                <input id="swal-login-password" class="swal2-input" type="password" placeholder="Password" autocomplete="current-password" style="background:#1a1033;color:#fff;border:1px solid rgba(255,255,255,0.2)">
+            `,
             showCancelButton: true,
-            confirmButtonText: "Enter",
+            confirmButtonText: "Login",
             allowOutsideClick: false,
             allowEscapeKey: false,
             background: "#030014",
             color: "#ffffff",
-            inputAttributes: {
-                autocapitalize: "off",
-                autocorrect: "off"
+            preConfirm: async () => {
+                const email = document.getElementById("swal-login-email").value.trim();
+                const password = document.getElementById("swal-login-password").value;
+                if (!email || !password) {
+                    Swal.showValidationMessage("Email dan password wajib diisi");
+                    return false;
+                }
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) {
+                    Swal.showValidationMessage("Login gagal: " + error.message);
+                    return false;
+                }
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                const passcode = import.meta.env.VITE_ADMIN_PASSCODE || "admin123";
-                if (result.value === passcode) {
-                    sessionStorage.setItem("admin_auth", "true");
-                    setIsAuthenticated(true);
-                    toast.success("Welcome back, Doni!");
-                    fetchData();
-                } else {
-                    toast.error("Access Denied: Incorrect passcode");
-                    window.location.href = "/";
-                }
+                setIsAuthenticated(true);
+                toast.success("Welcome back, Doni!");
+                fetchData();
             } else {
                 window.location.href = "/";
             }
@@ -705,7 +721,7 @@ const Admin = () => {
 
                 <div className="absolute bottom-6 left-6">
                     <button
-                        onClick={() => { sessionStorage.clear(); window.location.href = "/"; }}
+                        onClick={async () => { await supabase.auth.signOut(); window.location.href = "/"; }}
                         className="flex items-center gap-2 text-gray-500 hover:text-red-400 text-sm transition-colors"
                     >
                         <X className="w-4 h-4" />
@@ -720,7 +736,7 @@ const Admin = () => {
                 <div className="md:hidden mb-8 space-y-4">
                     <div className="flex items-center justify-between">
                         <span className="font-bold text-xl tracking-tight">Admin CMS</span>
-                        <button onClick={() => { sessionStorage.clear(); window.location.href = "/"; }} className="p-2 bg-white/5 rounded-lg"><X className="w-5 h-5 text-gray-400" /></button>
+                        <button onClick={async () => { await supabase.auth.signOut(); window.location.href = "/"; }} className="p-2 bg-white/5 rounded-lg"><X className="w-5 h-5 text-gray-400" /></button>
                     </div>
 
                     {/* Horizontal Scrolling Tabs for Mobile */}
