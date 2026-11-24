@@ -3,7 +3,6 @@ import toast from "react-hot-toast";
 import { supabase } from "../supabase";
 import {
     LayoutDashboard,
-    FileText,
     FolderKanban,
     Plus,
     Trash2,
@@ -668,7 +667,6 @@ const Admin = () => {
                     </div>
                 )}
 
-
                 {activeTab === "projects" && (
                     <div className="space-y-6 animate-fadeIn">
                         <div className="flex items-center justify-between">
@@ -1084,6 +1082,113 @@ const Admin = () => {
                                 </div>
                             ))}
                             {testimonials.length === 0 && <p className="text-gray-500 text-center py-8">No testimonials yet.</p>}
+                        </div>
+                    </div>
+                )}
+                {/* Services Tab */}
+                {activeTab === "services" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <h2 className="text-2xl font-bold">Services Manager</h2>
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
+                            <h3 className="font-bold">{editingService ? "Edit Service" : "Add Service"}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Service Title" value={newService.title} onChange={e => setNewService({ ...newService, title: e.target.value })} />
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Price (e.g. Rp 500.000)" value={newService.price_text} onChange={e => setNewService({ ...newService, price_text: e.target.value })} />
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="WhatsApp Number (e.g. 085117778351)" value={newService.whatsapp_number} onChange={e => setNewService({ ...newService, whatsapp_number: e.target.value })} />
+                                <select className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none text-white" value={newService.icon} onChange={e => setNewService({ ...newService, icon: e.target.value })}>
+                                    {["Palette", "PenTool", "Layout", "Film", "Camera", "Monitor", "Sparkles"].map(ic => <option key={ic} value={ic} className="bg-gray-900">{ic}</option>)}
+                                </select>
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" type="number" placeholder="Sort Order" value={newService.sort_order} onChange={e => setNewService({ ...newService, sort_order: parseInt(e.target.value) || 0 })} />
+                            </div>
+                            <textarea className="w-full bg-white/5 border border-white/10 rounded-xl p-3 h-20 outline-none focus:border-indigo-500" placeholder="Description" value={newService.description} onChange={e => setNewService({ ...newService, description: e.target.value })} />
+                            <textarea className="w-full bg-white/5 border border-white/10 rounded-xl p-3 h-16 outline-none focus:border-indigo-500" placeholder="WhatsApp template message" value={newService.whatsapp_template} onChange={e => setNewService({ ...newService, whatsapp_template: e.target.value })} />
+                            <div className="flex gap-3">
+                                <button onClick={handleSaveService} className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-6 py-2 rounded-xl hover:bg-indigo-500 hover:text-white transition-all font-bold flex items-center gap-2">
+                                    <Save className="w-4 h-4" /> {editingService ? "Update" : "Add"}
+                                </button>
+                                {editingService && <button onClick={() => { setEditingService(null); setNewService({ title: "", description: "", icon: "Palette", price_text: "", whatsapp_template: "", whatsapp_number: "", sort_order: 0, is_active: true }); }} className="text-gray-400 hover:text-white px-4 py-2">Cancel</button>}
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {services.map(s => (
+                                <div key={s.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
+                                    <div><p className="font-semibold">{s.title}</p><p className="text-sm text-gray-400">{s.price_text || "No price set"} • Order #{s.sort_order}</p></div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => { setEditingService(s); setNewService(s); }} className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><Edit2 className="w-4 h-4 text-blue-400" /></button>
+                                        <button onClick={() => handleDeleteService(s.id, s.title)} className="p-2 bg-white/5 rounded-lg hover:bg-red-500/20"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                                    </div>
+                                </div>
+                            ))}
+                            {services.length === 0 && <p className="text-gray-500 text-center py-8">No services yet.</p>}
+                        </div>
+                    </div>
+                )}
+
+                {/* Timeline Tab */}
+                {activeTab === "timeline" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <h2 className="text-2xl font-bold">Timeline / Experience</h2>
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
+                            <h3 className="font-bold">{editingExperience ? "Edit Experience" : "Add Experience"}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Year (e.g. 2024)" value={newExperience.year} onChange={e => setNewExperience({ ...newExperience, year: e.target.value })} />
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Title / Position" value={newExperience.title} onChange={e => setNewExperience({ ...newExperience, title: e.target.value })} />
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="Company / Organization" value={newExperience.company} onChange={e => setNewExperience({ ...newExperience, company: e.target.value })} />
+                                <input className="bg-white/5 border border-white/10 rounded-xl p-3 outline-none focus:border-indigo-500" type="number" placeholder="Sort Order" value={newExperience.sort_order} onChange={e => setNewExperience({ ...newExperience, sort_order: parseInt(e.target.value) || 0 })} />
+                            </div>
+                            <textarea className="w-full bg-white/5 border border-white/10 rounded-xl p-3 h-20 outline-none focus:border-indigo-500" placeholder="Description" value={newExperience.description} onChange={e => setNewExperience({ ...newExperience, description: e.target.value })} />
+                            <div className="flex gap-3">
+                                <button onClick={handleSaveExperience} className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-6 py-2 rounded-xl hover:bg-indigo-500 hover:text-white transition-all font-bold flex items-center gap-2">
+                                    <Save className="w-4 h-4" /> {editingExperience ? "Update" : "Add"}
+                                </button>
+                                {editingExperience && <button onClick={() => { setEditingExperience(null); setNewExperience({ year: "", title: "", company: "", description: "", sort_order: 0 }); }} className="text-gray-400 hover:text-white px-4 py-2">Cancel</button>}
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {experiences.map(ex => (
+                                <div key={ex.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between">
+                                    <div><p className="font-semibold">{ex.year} — {ex.title}</p><p className="text-sm text-gray-400">{ex.company}</p></div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => { setEditingExperience(ex); setNewExperience(ex); }} className="p-2 bg-white/5 rounded-lg hover:bg-white/10"><Edit2 className="w-4 h-4 text-blue-400" /></button>
+                                        <button onClick={() => handleDeleteExperience(ex.id, ex.title)} className="p-2 bg-white/5 rounded-lg hover:bg-red-500/20"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                                    </div>
+                                </div>
+                            ))}
+                            {experiences.length === 0 && <p className="text-gray-500 text-center py-8">No experiences yet.</p>}
+                        </div>
+                    </div>
+                )}
+
+                {/* Analytics Tab */}
+                {activeTab === "analytics" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <h2 className="text-2xl font-bold">Visitor Analytics</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+                                <div className="flex items-center gap-3 mb-2"><Eye className="w-5 h-5 text-blue-400" /><span className="text-gray-400 text-sm">Total Page Views</span></div>
+                                <p className="text-3xl font-bold">{pageViews.length}</p>
+                            </div>
+                            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+                                <div className="flex items-center gap-3 mb-2"><Monitor className="w-5 h-5 text-green-400" /><span className="text-gray-400 text-sm">Desktop</span></div>
+                                <p className="text-3xl font-bold">{pageViews.filter(pv => pv.device_type === "desktop").length}</p>
+                            </div>
+                            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+                                <div className="flex items-center gap-3 mb-2"><Smartphone className="w-5 h-5 text-orange-400" /><span className="text-gray-400 text-sm">Mobile</span></div>
+                                <p className="text-3xl font-bold">{pageViews.filter(pv => pv.device_type === "mobile").length}</p>
+                            </div>
+                        </div>
+                        {/* Top Pages */}
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+                            <h3 className="font-bold mb-4">Top Pages</h3>
+                            <div className="space-y-2">
+                                {Object.entries(pageViews.reduce((acc, pv) => { acc[pv.page_path] = (acc[pv.page_path] || 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([path, count], i) => (
+                                    <div key={i} className="flex items-center justify-between py-2 border-b border-white/5">
+                                        <span className="text-gray-300 text-sm">{path}</span>
+                                        <span className="text-indigo-400 font-bold text-sm">{count} views</span>
+                                    </div>
+                                ))}
+                                {pageViews.length === 0 && <p className="text-gray-500 text-center py-4">No page views recorded yet.</p>}
+                            </div>
                         </div>
                     </div>
                 )}
