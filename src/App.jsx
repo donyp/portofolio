@@ -11,9 +11,7 @@ import ProjectDetails from "./components/ProjectDetail";
 import WelcomeScreen from "./Pages/WelcomeScreen";
 import { AnimatePresence, motion } from 'framer-motion';
 import NotFoundPage from "./Pages/404";
-import Blog from "./Pages/Blog";
-import BlogDetail from "./Pages/BlogDetail";
-import LatestBlog from "./components/LatestBlog";
+
 import Admin from "./Pages/Admin";
 import Services from "./Pages/Services";
 import Testimonials from "./components/Testimonials";
@@ -109,7 +107,6 @@ const PageViewTracker = () => {
 const HomePage = () => (
   <>
     <Home />
-    <LatestBlog />
     <About />
     <Portofolio />
     <Testimonials />
@@ -168,8 +165,6 @@ function App() {
         <Route element={<Layout showWelcome={showWelcome} setShowWelcome={() => setShowWelcome(false)} />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/project/:id" element={<ProjectDetails />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:id" element={<BlogDetail />} />
           <Route path="/services" element={<Services />} />
         </Route>
         <Route path="/admin" element={<Admin />} />
