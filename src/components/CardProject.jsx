@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from "react-hot-toast";
 import { Link } from 'react-router-dom';
-import { ExternalLink, ArrowRight, Heart, Eye, Star } from 'lucide-react';
+import { ArrowRight, Heart, Eye, Star } from 'lucide-react';
 import { supabase } from '../supabase';
 
 const CardProject = ({ Img, Title, Description, Link: ProjectLink, id, likes = 0, views = 0, video_url = null, average_rating = 0 }) => {
@@ -40,13 +40,6 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id, likes = 0
       if (error) console.error("Supabase update error:", error);
     } catch (err) {
       console.error("Error updating likes:", err);
-    }
-  };
-
-  const handleLiveDemo = (e) => {
-    if (!ProjectLink) {
-      e.preventDefault();
-      toast.info("Link demo tidak tersedia");
     }
   };
 
@@ -102,21 +95,6 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id, likes = 0
 
             {/* Footer: Live Demo | Stats | Details */}
             <div className="pt-4 flex items-center justify-between gap-2">
-              {ProjectLink ? (
-                <a
-                  href={ProjectLink || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={handleLiveDemo}
-                  className="inline-flex items-center space-x-2 text-blue-400 hover:text-blue-300 transition-colors duration-200 shrink-0"
-                >
-                  <span className="text-sm font-medium">Live Demo</span>
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              ) : (
-                <span className="text-gray-500 text-sm shrink-0">Demo Not Available</span>
-              )}
-
               <div className="flex items-center gap-4">
                 {/* Metrics */}
                 <div className="flex items-center gap-2.5 text-gray-400">
