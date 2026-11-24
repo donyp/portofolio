@@ -260,7 +260,7 @@ const AboutPage = () => {
               </div>
 
               <blockquote className="text-gray-300 text-center lg:text-left italic font-medium text-sm relative z-10 pl-6">
-                "Good design is not just about aesthetics — it's about solving problems with creativity."
+                "Good design is not just about aesthetics, it's about solving problems with creativity."
               </blockquote>
             </div>
 
