@@ -1,0 +1,233 @@
+import React, { useState, useEffect, useCallback, memo } from "react"
+import { Github, Linkedin, Mail, ExternalLink, Instagram, Sparkles } from "lucide-react"
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import AOS from 'aos'
+import 'aos/dist/aos.css'
+import { supabase } from "../supabase"
+
+// Memoized Components
+const StatusBadge = memo(() => (
+  <div className="inline-block animate-float lg:mx-0" data-aos="zoom-in" data-aos-delay="400">
+    <div className="relative group">
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#6366f1] to-[#a855f7] rounded-full blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
+      <div className="relative px-3 sm:px-4 py-2 rounded-full bg-black/40 backdrop-blur-xl border border-white/10">
+        <span className="bg-gradient-to-r from-[#6366f1] to-[#a855f7] text-transparent bg-clip-text sm:text-sm text-[0.7rem] font-medium flex items-center">
+          <Sparkles className="sm:w-4 sm:h-4 w-3 h-3 mr-2 text-blue-400" />
+          Let's Collaborate
+        </span>
+      </div>
+    </div>
+  </div>
+));
+
+
+
+const TechStack = memo(({ tech }) => (
+  <div className="px-4 py-2 hidden sm:block rounded-full bg-white/5 backdrop-blur-sm border border-white/10 text-sm text-gray-300 hover:bg-white/10 transition-colors">
+    {tech}
+  </div>
+));
+
+const CTAButton = memo(({ href, text, icon: Icon }) => (
+  <a href={href}>
+    <button className="group relative w-[160px]">
+      {/* Glow removed */}
+      <div className="relative h-11 bg-[#030014] backdrop-blur-xl rounded-lg border border-white/10 leading-none overflow-hidden">
+        <div className="absolute inset-0 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 bg-gradient-to-r from-[#4f52c9]/20 to-[#8644c5]/20"></div>
+        <span className="absolute inset-0 flex items-center justify-center gap-2 text-sm group-hover:gap-3 transition-all duration-300">
+          <span className="bg-gradient-to-r from-gray-200 to-white bg-clip-text text-transparent font-medium z-10">
+            {text}
+          </span>
+          <Icon className={`w-4 h-4 text-gray-200 ${text === 'Contact' ? 'group-hover:translate-x-1' : 'group-hover:rotate-45'} transform transition-all duration-300 z-10`} />
+        </span>
+      </div>
+    </button>
+  </a>
+));
+
+const SocialLink = memo(({ icon: Icon, link }) => (
+  <a href={link} target="_blank" rel="noopener noreferrer">
+    <button className="group relative p-3">
+      {/* Glow removed */}
+      <div className="relative rounded-xl bg-black/50 backdrop-blur-xl p-2 flex items-center justify-center border border-white/10 group-hover:border-white/20 transition-all duration-300">
+        <Icon className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+      </div>
+    </button>
+  </a>
+));
+
+// Constants
+const TYPING_SPEED = 100;
+const ERASING_SPEED = 50;
+const PAUSE_DURATION = 2000;
+const WORDS = ["Brand Designer", "Visual Storyteller", "Content Creator"];
+const TECH_STACK = ["Branding", "Design", "Strategy", "Content"];
+const SOCIAL_LINKS = [
+  { icon: Linkedin, key: "linkedin_url" },
+  { icon: Instagram, key: "instagram_url" },
+  { icon: Github, key: "github_url" }
+];
+
+const Home = () => {
+  const [text, setText] = useState("")
+  const [isTyping, setIsTyping] = useState(true)
+  const [wordIndex, setWordIndex] = useState(0)
+  const [charIndex, setCharIndex] = useState(0)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [isHovering, setIsHovering] = useState(false)
+
+  const [profile, setProfile] = useState({
+    full_name: "Creative Portfolio",
+    role: "Visual Storyteller",
+    typing_words: "Brand Designer, Visual Storyteller, Content Creator",
+    github_url: "",
+    linkedin_url: "",
+    instagram_url: ""
+  });
+  const [techStack, setTechStack] = useState([]);
+
+  const words = profile.typing_words.split(", ").map(w => w.trim());
+
+  // Optimize AOS initialization
+  useEffect(() => {
+    const initAOS = () => {
+      AOS.init({
+        once: true,
+        offset: 10,
+
+      });
+    };
+
+    initAOS();
+    window.addEventListener('resize', initAOS);
+    return () => window.removeEventListener('resize', initAOS);
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [settingsRes, techRes] = await Promise.all([
+          supabase.from("site_settings").select("*").single(),
+          supabase.from("tech_stacks").select("*").order("id", { ascending: true })
+        ]);
+        if (settingsRes.data) setProfile(settingsRes.data);
+        if (techRes.data) setTechStack(techRes.data);
+      } catch (err) {
+        console.error("Error fetching home data:", err);
+      }
+    };
+    fetchData();
+    setIsLoaded(true);
+    return () => setIsLoaded(false);
+  }, []);
+
+  // Optimize typing effect
+  const handleTyping = useCallback(() => {
+    if (isTyping) {
+      if (charIndex < words[wordIndex].length) {
+        setText(prev => prev + words[wordIndex][charIndex]);
+        setCharIndex(prev => prev + 1);
+      } else {
+        setTimeout(() => setIsTyping(false), PAUSE_DURATION);
+      }
+    } else {
+      if (charIndex > 0) {
+        setText(prev => prev.slice(0, -1));
+        setCharIndex(prev => prev - 1);
+      } else {
+        setWordIndex(prev => (prev + 1) % words.length);
+        setIsTyping(true);
+      }
+    }
+  }, [charIndex, isTyping, wordIndex, words]);
+
+  useEffect(() => {
+    const timeout = setTimeout(
+      handleTyping,
+      isTyping ? TYPING_SPEED : ERASING_SPEED
+    );
+    return () => clearTimeout(timeout);
+  }, [handleTyping]);
+
+  // Lottie configuration
+  const lottieOptions = {
+    src: "https://lottie.host/7905c06a-3510-410a-9d66-5c0245084931/xU663hNoJ0.lottie",
+    loop: true,
+    autoplay: true,
+    style: { width: "100%", height: "100%" },
+    className: `w-full h-full transition-all duration-500 ${isHovering
+      ? "scale-[180%] sm:scale-[160%] md:scale-[150%] lg:scale-[145%] rotate-2"
+      : "scale-[175%] sm:scale-[155%] md:scale-[145%] lg:scale-[140%]"
+      }`
+  };
+
+  return (
+    <div className="min-h-screen bg-[#030014] overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%] " id="Home">
+      <div className={`relative z-10 transition-all duration-1000 ${isLoaded ? "opacity-100" : "opacity-0"}`}>
+        <div className="container mx-auto  min-h-screen ">
+          <div className="flex flex-col items-center justify-center min-h-screen relative pt-16 sm:pt-20 md:pt-32">
+            {/* Background Lottie Animation */}
+            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-30 pointer-events-none"
+              data-aos="fade-in"
+              data-aos-delay="600">
+              <div className={`w-full max-w-3xl aspect-square transform transition-transform duration-500 ${isHovering ? "scale-110" : "scale-100"}`}>
+                <DotLottieReact {...lottieOptions} />
+              </div>
+            </div>
+
+            {/* Centered Content */}
+            <div className="w-full max-w-3xl space-y-6 sm:space-y-8 text-center z-10"
+              data-aos="fade-up"
+              data-aos-delay="200">
+              <div className="space-y-4 sm:space-y-6 flex flex-col items-center">
+                <StatusBadge />
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tighter text-white" data-aos="fade-up" data-aos-delay="600">
+                  {profile.full_name}
+                </h1>
+
+                {/* Typing Effect */}
+                <div className="h-8 flex items-center justify-center" data-aos="fade-up" data-aos-delay="800">
+                  <span className="text-xl md:text-2xl bg-gradient-to-r from-gray-100 to-gray-300 bg-clip-text text-transparent font-light">
+                    {text}
+                  </span>
+                  <span className="w-[3px] h-6 bg-gradient-to-t from-[#6366f1] to-[#a855f7] ml-1 animate-blink"></span>
+                </div>
+
+                {/* Description */}
+                <p className="text-base md:text-lg text-gray-400 max-w-xl leading-relaxed font-light"
+                  data-aos="fade-up"
+                  data-aos-delay="1000">
+                  {profile.role === "Visual Storyteller"
+                    ? "Crafting meaningful visuals and strategic content that help brands stand out, connect with their audience, and leave a lasting impression."
+                    : `Specializing in ${profile.role.toLowerCase()} and strategic branding to elevate your digital presence.`}
+                </p>
+
+                {/* Tech Stack */}
+                <div className="flex flex-wrap gap-3 justify-center" data-aos="fade-up" data-aos-delay="1200">
+                  {techStack.map((tech, index) => (
+                    <TechStack key={index} tech={tech.name} />
+                  ))}
+                </div>
+
+                {/* CTA Buttons */}
+                <div className="flex flex-row gap-3 w-full justify-center pt-4" data-aos="fade-up" data-aos-delay="1400">
+                  <CTAButton href="#Portofolio" text="Projects" icon={ExternalLink} />
+                  <CTAButton href="#Contact" text="Contact" icon={Mail} />
+                </div>
+
+                {/* Social Links */}
+                <div className="hidden sm:flex gap-4 justify-center pt-2" data-aos="fade-up" data-aos-delay="1600">
+                  {SOCIAL_LINKS.map((social, index) => (
+                    profile[social.key] ? <SocialLink key={index} icon={social.icon} link={profile[social.key]} /> : null
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default memo(Home);

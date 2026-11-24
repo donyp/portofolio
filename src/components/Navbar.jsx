@@ -1,0 +1,257 @@
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X } from "lucide-react";
+
+const Navbar = () => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const [activeSection, setActiveSection] = useState("Home");
+    const [scrollProgress, setScrollProgress] = useState(0);
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const navItems = [
+        { href: "/", label: "Home", type: "section" },
+        { href: "#About", label: "About", type: "section" },
+        { href: "#Portofolio", label: "Works", type: "section" },
+        { href: "/services", label: "Services", type: "route" },
+        { href: "/blog", label: "Blog", type: "route" },
+        { href: "#Contact", label: "Contact", type: "section" },
+    ];
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const currentPosition = window.scrollY;
+            setScrolled(currentPosition > 20);
+
+            // Scroll Progress
+            const totalScroll = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            setScrollProgress(totalScroll > 0 ? (currentPosition / totalScroll) * 100 : 0);
+
+            const sections = navItems
+                .filter(item => item.type === "section" && item.href.startsWith("#"))
+                .map(item => {
+                    const section = document.querySelector(item.href);
+                    if (section) {
+                        return {
+                            id: item.href.replace("#", ""),
+                            offset: section.offsetTop - 550,
+                            height: section.offsetHeight
+                        };
+                    }
+                    return null;
+                }).filter(Boolean);
+
+            const active = sections.find(section =>
+                currentPosition >= section.offset &&
+                currentPosition < section.offset + section.height
+            );
+
+            if (active) {
+                setActiveSection(active.id);
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll);
+        handleScroll();
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+    }, [isOpen]);
+
+    const scrollToSection = (e, href) => {
+        e.preventDefault();
+        setIsOpen(false);
+
+        // Handle Home link - scroll to top
+        if (href === "/") {
+            if (location.pathname !== "/") {
+                navigate("/");
+                setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
+            } else {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+            return;
+        }
+
+        // If on a different page and clicking a section link, navigate to home first
+        if (location.pathname !== "/") {
+            navigate("/");
+            // Use a longer timeout or a more robust check to ensure elements are mounted
+            setTimeout(() => {
+                const section = document.querySelector(href);
+                if (section) {
+                    const top = section.offsetTop - 100;
+                    window.scrollTo({ top, behavior: "smooth" });
+                }
+            }, 500); // Increased to 500ms for better reliability
+            return;
+        }
+
+        const section = document.querySelector(href);
+        if (section) {
+            const top = section.offsetTop - 100;
+            window.scrollTo({
+                top: top,
+                behavior: "smooth"
+            });
+        }
+    };
+
+    return (
+        <nav
+            className={`fixed w-full top-0 z-[100] transition-all duration-500 ${isOpen
+                ? "bg-[#030014]"
+                : scrolled
+                    ? "bg-[#030014]/50 backdrop-blur-xl"
+                    : "bg-transparent"
+                }`}
+        >
+            {/* Scroll Progress Bar */}
+            <div
+                className="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#a855f7] to-[#6366f1] transition-width duration-150 ease-out"
+                style={{ width: `${scrollProgress}%` }}
+            />
+
+            <div className="mx-auto px-[5%] sm:px-[5%] lg:px-[10%]">
+                <div className="flex items-center justify-between h-16">
+                    {/* Logo */}
+                    <div className="flex-shrink-0">
+                        <a
+                            href="/"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                                setIsOpen(false);
+                            }}
+                            className="text-xl font-bold bg-gradient-to-r from-[#a855f7] to-[#6366f1] bg-clip-text text-transparent"
+                        >
+                            DS.
+                        </a>
+                    </div>
+
+                    {/* Desktop Navigation */}
+                    <div className="hidden md:block">
+                        <div className="ml-8 flex items-center space-x-8">
+                            {navItems.map((item) => (
+                                item.type === "route" ? (
+                                    <Link
+                                        key={item.label}
+                                        to={item.href}
+                                        className={`group relative px-1 py-2 text-sm font-medium transition-colors duration-300 ${(item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href))
+                                            ? "text-white font-semibold"
+                                            : "text-[#e2d3fd] group-hover:text-white"
+                                            }`}
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        <span className={`relative z-10 ${(item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href)) ? "bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent" : ""}`}>
+                                            {item.label}
+                                        </span>
+                                        <span
+                                            className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#6366f1] to-[#a855f7] transform origin-left transition-transform duration-300 ${(item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href)) ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                                                }`}
+                                        />
+                                    </Link>
+                                ) : (
+                                    <a
+                                        key={item.label}
+                                        href={item.href}
+                                        onClick={(e) => scrollToSection(e, item.href)}
+                                        className="group relative px-1 py-2 text-sm font-medium"
+                                    >
+                                        <span
+                                            className={`relative z-10 transition-colors duration-300 ${activeSection === item.href.substring(1)
+                                                ? "bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent font-semibold"
+                                                : "text-[#e2d3fd] group-hover:text-white"
+                                                }`}
+                                        >
+                                            {item.label}
+                                        </span>
+                                        <span
+                                            className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#6366f1] to-[#a855f7] transform origin-left transition-transform duration-300 ${activeSection === item.href.substring(1)
+                                                ? "scale-x-100"
+                                                : "scale-x-0 group-hover:scale-x-100"
+                                                }`}
+                                        />
+                                    </a>
+                                )
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Mobile Menu Button */}
+                    <div className="md:hidden">
+                        <button
+                            onClick={() => setIsOpen(!isOpen)}
+                            aria-label="Toggle Menu"
+                            className={`relative p-2 text-white hover:text-white transition-transform duration-300 ease-in-out transform ${isOpen ? "rotate-90 scale-125" : "rotate-0 scale-100"
+                                }`}
+                        >
+                            {isOpen ? (
+                                <X className="w-6 h-6" />
+                            ) : (
+                                <Menu className="w-6 h-6" />
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Mobile Menu */}
+            <div
+                className={`md:hidden transition-all duration-300 ease-in-out ${isOpen
+                    ? "max-h-screen opacity-100"
+                    : "max-h-0 opacity-0 overflow-hidden"
+                    }`}
+            >
+                <div className="px-4 py-6 space-y-4">
+                    {navItems.map((item, index) => (
+                        item.type === "route" ? (
+                            <Link
+                                key={item.label}
+                                to={item.href}
+                                className={`block px-4 py-3 text-lg font-medium transition-all duration-300 ease ${(item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href))
+                                    ? "bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent font-semibold"
+                                    : "text-[#e2d3fd] hover:text-white"
+                                    }`}
+                                style={{
+                                    transitionDelay: `${index * 100}ms`,
+                                    transform: isOpen ? "translateX(0)" : "translateX(50px)",
+                                    opacity: isOpen ? 1 : 0,
+                                }}
+                                onClick={() => setIsOpen(false)}
+                            >
+                                {item.label}
+                            </Link>
+                        ) : (
+                            <a
+                                key={item.label}
+                                href={item.href}
+                                onClick={(e) => scrollToSection(e, item.href)}
+                                className={`block px-4 py-3 text-lg font-medium transition-all duration-300 ease ${activeSection === item.href.substring(1)
+                                    ? "bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent font-semibold"
+                                    : "text-[#e2d3fd] hover:text-white"
+                                    }`}
+                                style={{
+                                    transitionDelay: `${index * 100}ms`,
+                                    transform: isOpen ? "translateX(0)" : "translateX(50px)",
+                                    opacity: isOpen ? 1 : 0,
+                                }}
+                            >
+                                {item.label}
+                            </a>
+                        )
+                    ))}
+                </div>
+            </div>
+        </nav>
+    );
+};
+
+export default Navbar;
