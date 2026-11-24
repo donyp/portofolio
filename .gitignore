@@ -24,8 +24,8 @@ dist/
 *.sln
 *.sw?
 *.env
+
 # Generated artifacts
 build_*.txt
 lint_*.txt
 lint_*.json
-
