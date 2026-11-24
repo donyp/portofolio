@@ -1193,6 +1193,28 @@ const Admin = () => {
                     </div>
                 )}
 
+                {/* Activity Log Tab */}
+                {activeTab === "activity" && (
+                    <div className="space-y-8 animate-fadeIn">
+                        <h2 className="text-2xl font-bold flex items-center gap-3">
+                            <Clock className="w-8 h-8 text-indigo-400" />
+                            Activity Log
+                        </h2>
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-3xl space-y-3">
+                            {activityLogs.length === 0 && <p className="text-gray-500 text-center py-8">No activity yet.</p>}
+                            {activityLogs.map((log) => (
+                                <div key={log.id} className="flex items-center justify-between border-b border-white/5 py-3">
+                                    <div>
+                                        <p className="text-white text-sm font-medium">{log.action} {log.entity_type}</p>
+                                        {log.entity_name && <p className="text-gray-400 text-xs">{log.entity_name}</p>}
+                                    </div>
+                                    <span className="text-gray-500 text-xs">{new Date(log.created_at).toLocaleString()}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* General Comments Tab */}
                 {activeTab === "gen_comments" && (
                     <div className="space-y-8 animate-fadeIn">
