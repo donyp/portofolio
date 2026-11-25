@@ -110,7 +110,13 @@ const Home = () => {
           supabase.from("site_settings").select("*").single(),
           supabase.from("tech_stacks").select("*").order("id", { ascending: true })
         ]);
-        if (settingsRes.data) setProfile(settingsRes.data);
+        if (settingsRes.data) {
+          const profileData = { ...settingsRes.data };
+          if (profileData.linkedin_url && profileData.linkedin_url.includes("doni-sugiharto-601874294")) {
+            profileData.linkedin_url = "https://www.linkedin.com/in/donisugiharto11/";
+          }
+          setProfile(profileData);
+        }
         if (techRes.data) setTechStack(techRes.data);
       } catch (err) {
         console.error("Error fetching home data:", err);
