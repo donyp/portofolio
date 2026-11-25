@@ -202,52 +202,83 @@ const Navbar = () => {
                 </div>
             </div>
 
-            {/* Mobile Menu */}
+            {/* Mobile Sidebar Menu */}
             <div
-                className={`md:hidden transition-all duration-300 ease-in-out ${isOpen
-                    ? "max-h-screen opacity-100"
-                    : "max-h-0 opacity-0 overflow-hidden"
+                className={`md:hidden fixed inset-0 z-[100] transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
                     }`}
             >
-                <div className="px-4 py-6 space-y-4">
-                    {navItems.map((item, index) => (
-                        item.type === "route" ? (
-                            <Link
-                                key={item.label}
-                                to={item.href}
-                                className={`block px-4 py-3 text-lg font-medium transition-all duration-300 ease ${(item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href))
-                                    ? "bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent font-semibold"
-                                    : "text-[#e2d3fd] hover:text-white"
-                                    }`}
-                                style={{
-                                    transitionDelay: `${index * 100}ms`,
-                                    transform: isOpen ? "translateX(0)" : "translateX(50px)",
-                                    opacity: isOpen ? 1 : 0,
-                                }}
-                                onClick={() => setIsOpen(false)}
-                            >
-                                {item.label}
-                            </Link>
-                        ) : (
-                            <a
-                                key={item.label}
-                                href={item.href}
-                                onClick={(e) => scrollToSection(e, item.href)}
-                                className={`block px-4 py-3 text-lg font-medium transition-all duration-300 ease ${activeSection === item.href.substring(1)
-                                    ? "bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent font-semibold"
-                                    : "text-[#e2d3fd] hover:text-white"
-                                    }`}
-                                style={{
-                                    transitionDelay: `${index * 100}ms`,
-                                    transform: isOpen ? "translateX(0)" : "translateX(50px)",
-                                    opacity: isOpen ? 1 : 0,
-                                }}
-                            >
-                                {item.label}
-                            </a>
-                        )
-                    ))}
-                </div>
+                {/* Backdrop */}
+                <div
+                    className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                    onClick={() => setIsOpen(false)}
+                />
+
+                {/* Sidebar Panel */}
+                <aside
+                    className={`absolute top-0 right-0 h-full w-72 max-w-[85vw] bg-[#030014]/95 backdrop-blur-xl border-l border-white/10 shadow-2xl transform transition-transform duration-300 ease-out ${isOpen ? "translate-x-0" : "translate-x-full"
+                        }`}
+                >
+                    <div className="flex items-center justify-between p-5 border-b border-white/10">
+                        <a
+                            href="/"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setIsOpen(false);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            className="text-xl font-bold bg-gradient-to-r from-[#a855f7] to-[#6366f1] bg-clip-text text-transparent"
+                        >
+                            DS.
+                        </a>
+                        <button
+                            onClick={() => setIsOpen(false)}
+                            aria-label="Close Menu"
+                            className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    <nav className="px-4 py-6 space-y-2 overflow-y-auto h-[calc(100%-73px)]">
+                        {navItems.map((item, index) => (
+                            item.type === "route" ? (
+                                <Link
+                                    key={item.label}
+                                    to={item.href}
+                                    className={`block px-4 py-3 rounded-xl text-lg font-medium transition-all duration-300 ease ${(item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href))
+                                        ? "bg-white/10 text-white font-semibold"
+                                        : "text-[#e2d3fd] hover:text-white hover:bg-white/5"
+                                        }`}
+                                    style={{
+                                        transitionDelay: `${index * 50}ms`,
+                                        transform: isOpen ? "translateX(0)" : "translateX(20px)",
+                                        opacity: isOpen ? 1 : 0,
+                                    }}
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    {item.label}
+                                </Link>
+                            ) : (
+                                <a
+                                    key={item.label}
+                                    href={item.href}
+                                    onClick={(e) => scrollToSection(e, item.href)}
+                                    className={`block px-4 py-3 rounded-xl text-lg font-medium transition-all duration-300 ease ${activeSection === item.href.substring(1)
+                                        ? "bg-white/10 text-white font-semibold"
+                                        : "text-[#e2d3fd] hover:text-white hover:bg-white/5"
+                                        }`}
+                                    style={{
+                                        transitionDelay: `${index * 50}ms`,
+                                        transform: isOpen ? "translateX(0)" : "translateX(20px)",
+                                        opacity: isOpen ? 1 : 0,
+                                    }}
+                                >
+                                    {item.label}
+                                </a>
+                            )
+                        ))}
+                    </nav>
+                </aside>
             </div>
         </nav>
     );
