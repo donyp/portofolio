@@ -259,7 +259,8 @@ const Admin = () => {
 
     const handleUpdateSiteSettings = async () => {
         setLoading(true);
-        const { error } = await supabase.from("site_settings").update(siteSettings).eq("id", siteSettings.id);
+        const { id, ...settingsToUpdate } = siteSettings;
+        const { error } = await supabase.from("site_settings").update(settingsToUpdate).eq("id", id);
         if (error) {
             toast.error("Error: " + error.message);
         } else {
